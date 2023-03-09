@@ -1,0 +1,16 @@
+{
+  "page": {
+    "home": {
+      "title": "Homepage",
+      "description": "Home"
+    },
+    "about": {
+      "title": "About",
+      "description": "About us"
+    },
+    "contact": {
+      "title": "Contact",
+      "description": "Contact us"
+    }
+  }
+}
