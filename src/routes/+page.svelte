@@ -1,20 +1,26 @@
 <script>
 // @ts-nocheck
-import { MetaTags } from 'svelte-meta-tags';
 // import { _ } from 'svelte-i18n'
+import CanvasEditor from "$lib/components/Editor.svelte"
 import * as THREE from "three"
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { onMount } from 'svelte';
 import { CONSTELLATIONS } from "$lib/constellations.ts"
+import { GUI } from 'dat.gui'
+
+import {Ori, Ari, Gem, Cap} from "$lib/assets/textures.ts"
+
 let data;
 let ip;
+let drawing = ""
+
 
 onMount(async () => {
   const stars_json = await import("../stars.json")
   const stars = stars_json.default
   const scene = new THREE.Scene();
-  // scene.background = new THREE.Color(0xf5f5f5);
-  scene.background = new THREE.Color(0x050505);
+  scene.background = new THREE.Color(0x151515);
 
   let size = {
     width: window.innerWidth,
@@ -22,27 +28,49 @@ onMount(async () => {
     ratio: window.innerWidth / window.innerHeight,
   }
 
-  const camera = new THREE.PerspectiveCamera(40, size.ratio, 5, 10000)
+  const camera = new THREE.PerspectiveCamera(50, size.ratio, 5, 10000)
 
   const renderer = new THREE.WebGLRenderer( { antialias: true , preserveDrawingBuffer: true } );
   renderer.setSize( size.width, size.height );
 
   const controls = new OrbitControls(camera, renderer.domElement)
-
+  // controls.maxPolarAngle = Math.PI/2;
+  controls.minDistance = 1;
+  // controls.maxDistance = 100;
   camera.position.set(0, 0, 1)
-  scene.rotation.x = -Math.PI / 2;
+  scene.rotation.x = -(Math.PI/2); //+(Math.PI*23.4)/(2*90) 地軸
   controls.update();
+  //星座 処理
   var sizes = [];
   var positions = [];
   var colors = [];
   var color = new THREE.Color();
   stars.forEach((star) =>{
-    positions.push(star.x, star.y, star.z);
-    color.setRGB(star.r, star.g, star.b);
-    colors.push(Math.abs(color.r-128), Math.abs(color.g-128), Math.abs(color.b-128));
-    sizes.push(star.size*10)
+    positions.push(star.x, star.y, star.z)
+    colors.push(star.r/255, star.g/255, star.b/255)
+    sizes.push(star.size)
   })
-  //星座
+  //星全部
+  // for (let i=8, 0<=i, i++) {
+  var geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(colors), 3));
+  // geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
+  geometry.computeBoundingSphere();
+  var material = new THREE.PointsMaterial({
+      // size: 5,
+      sizeAttenuation: true,
+      vertexColors: true,
+      depthWrite:true
+    });
+    let points = new THREE.Points(geometry, material);
+    scene.add(points);
+  // }
+//   const geometry = new THREE.CircleGeometry( 5, 32 );
+//   const material = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
+  // const circle = new THREE.Mesh( geometry, material );
+  // scene.add( circle );
+  //星座線 描画
   var lines = []
   const keys = Object.keys(CONSTELLATIONS);
   keys.forEach((key)=> {
@@ -53,39 +81,26 @@ onMount(async () => {
       })
     })
   })
-  var material = new THREE.LineBasicMaterial({ color: "#f00" });
+  var material = new THREE.LineBasicMaterial({ color: "#FED75D" });
   var geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(lines, 3));
-  var l = new THREE.LineSegments(geometry, material);
-  scene.add(l);
-  //星全部
-  var geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions, 3));
-  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-  geometry.setAttribute('size', new THREE.Int32BufferAttribute(sizes, 1));
-  geometry.computeBoundingSphere();
-  var material = new THREE.PointsMaterial({
-    size: 5,
-    sizeAttenuation: true,
-    vertexColors: true,
-  });
-  let p = new THREE.Points(geometry, material);
-  scene.add(p);
+  var starLines = new THREE.LineSegments(geometry, material);
+  scene.add(starLines);
   //北極星
   var geometry = new THREE.SphereGeometry(20, 32, 16);
-  var material = new THREE.MeshBasicMaterial({ color: "#ff0" });
+  var material = new THREE.MeshBasicMaterial({ color: "#fff" });
   var sphere = new THREE.Mesh( geometry, material );
   sphere.position.z = 1000
   scene.add( sphere );
   //星座の絵貼り付ける球
   var geometry = new THREE.SphereGeometry(990, 100, 100); //実装時に990->1000に変える、0.7->0に変える
-  var material = new THREE.MeshLambertMaterial({ transparent: true, opacity: 0.7 });
-  material.transparent = true
+  var material = new THREE.MeshLambertMaterial({ transparent: true, opacity: 0.8 });
+  const loader = new THREE.TextureLoader();
+  const textures_path = ["Ori", "Cap", "Gem", "Ari"]
+  const textures = []
+  // material.transparent = true
   var sphere = new THREE.Mesh( geometry, material );
-  // new THREE.TextureLoader().load("$lib/assets/orion.png")
   scene.add(sphere);
-  
-
   var geometry = new THREE.PlaneGeometry( 10000, 10000 );
   var material = new THREE.MeshBasicMaterial( {color: "#1F365A", side: THREE.DoubleSide} );
   var plane = new THREE.Mesh( geometry, material );
@@ -101,6 +116,26 @@ onMount(async () => {
   //   rc.setFromCamera(m, camera);
   //   intscs = rc.intersectObjects()
   // }
+  //gui
+  const gui = new GUI()
+  const starFolder = gui.addFolder('Star')
+  starFolder.add(points.rotation, 'x', 0, Math.PI * 2)
+  starFolder.add(points.rotation, 'y', 0, Math.PI * 2)
+  starFolder.add(points.rotation, 'z', 0, Math.PI * 2)
+  starFolder.open()
+  const cameraFolder = gui.addFolder('Camera')
+  cameraFolder.add(camera.position, 'z', 0, 10)
+  cameraFolder.open()
+  const lineFolder = gui.addFolder('Star Lines')
+  lineFolder.add(starLines.material.color, 'r', 0, 1)
+  lineFolder.add(starLines.material.color, 'g', 0, 1)
+  lineFolder.add(starLines.material.color, 'b', 0, 1)
+  lineFolder.open()
+  const sceneFolder = gui.addFolder('Scene')
+  sceneFolder.add(scene.rotation, 'x', -Math.PI, Math.PI)
+  sceneFolder.add(scene.rotation, 'y', -Math.PI, Math.PI)
+  sceneFolder.add(scene.rotation, 'z', -Math.PI, Math.PI)
+  sceneFolder.open()
   document.body.appendChild( renderer.domElement );
   // renderer.domElement.addEventListener("pointermove", onMouseMove);
   renderer.render(scene, camera);
@@ -110,38 +145,37 @@ onMount(async () => {
     renderer.render( scene, camera );
   }
   animate()
-})
-//
+});
 </script>
 <svelte:head>
   <title>星座</title>
-  <MetaTags
-  openGraph={{
-    type: 'website',
-    url: 'https://www.example.com/page',
-    // title: $_('page.home.title'),
-    // description: $_('page.home.description'),
-    title: "星座",
-    description: "💫星座です💫"
-  }}
-/>
+  <meta property="og:url" content="https://qac.vercel.app/">
+  <meta property="og:title" content="量子星座生成アプリ">
+  <meta property="og:description" content="💫量子アニーリングを使ってあなたのお絵描きから星座を生成するアプリです💫">
+  <meta property="og:image" content="">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta property="twitter:domain" content="qac.vercel.app">
+  <meta property="twitter:url" content="https://qac.vercel.app/">
+  <meta name="twitter:title" content="量子星座生成アプリ">
+  <meta name="twitter:description" content="💫量子アニーリングを使ってあなたのお絵描きから星座を生成するアプリです💫">
+  <meta name="twitter:image" content="">
 </svelte:head>
 
 <div id="container">
-  
-  
+  <CanvasEditor bind:canvas={drawing}  />
+  <!-- <DevelopMode /> -->
 </div>
 <style>
 	:global(body) {
     /* overflow: hidden; */
 		margin: 0;
 	}
-  #container {
+  /* #container {
     position: fixed;
     top: 10;
     right: 10;
-    width: 80px;
-    height: 120px;
-    background: "#444";
-  }
+    width: 500px;
+    height: 500px;
+  } */
 </style>
