@@ -88,8 +88,8 @@ onMount(() => {
 <div id="canvas_container" bind:this={canvas_container}>
   <canvas id="canvas" bind:this={canvas}></canvas>
   <!-- <button bind:this={btn}>dataurl</button> -->
-  <label>星座名</label>
-  <input />
+  <label for="name">星座名</label>
+  <input id="name" />
   <button bind:this={btn_send}>生成</button>
   <button id="x_btn" bind:this={x_btn}>{closed? ">": "<"}</button>
 </div>

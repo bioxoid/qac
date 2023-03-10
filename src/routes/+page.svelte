@@ -7,14 +7,12 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { onMount } from 'svelte';
 import { CONSTELLATIONS } from "$lib/constellations.ts"
-import { GUI } from 'dat.gui'
 
 import {Ori, Ari, Gem, Cap} from "$lib/assets/textures.ts"
 
 let data;
 let ip;
 let drawing = ""
-
 
 onMount(async () => {
   const stars_json = await import("../stars.json")
@@ -102,7 +100,7 @@ onMount(async () => {
   var geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(lines, 3));
   var material = new THREE.LineBasicMaterial({ color: "#FED75D" });
-  var starLines = new THREE.LineSegments(geometry, material);
+  const starLines = new THREE.LineSegments(geometry, material);
   scene.add(starLines);
   //北極星
   var geometry = new THREE.SphereGeometry(20, 32, 16);
@@ -141,8 +139,8 @@ onMount(async () => {
   //   rc.setFromCamera(m, camera);
   //   intscs = rc.intersectObjects()
   // }
-  //gui
-  const gui = new GUI()
+  const dat = await import('dat.gui')
+  const gui = new dat.GUI()
   // const starFolder = gui.addFolder('Star')
   // starFolder.add(points.rotation, 'x', 0, Math.PI * 2)
   // starFolder.add(points.rotation, 'y', 0, Math.PI * 2)
@@ -160,7 +158,6 @@ onMount(async () => {
   sceneFolder.add(scene.rotation, 'x', -Math.PI, Math.PI)
   sceneFolder.add(scene.rotation, 'y', -Math.PI, Math.PI)
   sceneFolder.add(scene.rotation, 'z', -Math.PI, Math.PI)
-  // sceneFolder.open()
   document.body.appendChild( renderer.domElement );
   // renderer.domElement.addEventListener("pointermove", onMouseMove);
   renderer.render(scene, camera);
