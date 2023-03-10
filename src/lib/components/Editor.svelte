@@ -105,7 +105,6 @@ onMount(() => {
   background-color: rgba(244, 244, 244, 0.5);
   z-index: 1;
   transition: all 0.3s ease;
-  visibility: hidden; /*後で消す*/
 }
 #canvas {
   border: 2px solid black;
