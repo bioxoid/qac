@@ -1,17 +1,19 @@
 <script>
 import { onMount } from 'svelte';
 export let canvas;
-export let div;
+let div;
 let canvas_container
 let btn;
 let ctx;
+let btn_send
 let x_btn;
+let closed = false;
 onMount(() => {
   let isDrawing = false;
   let x = 0;
   let y = 0;
   ctx = canvas.getContext('2d');
-  document.addEventListener('mousedown', e => {
+  canvas.addEventListener('mousedown', e => {
     isDrawing = true;
     x = e.offsetX;
     y = e.offsetY/2;
@@ -19,7 +21,7 @@ onMount(() => {
     ctx.lineTo(x, y);
     ctx.stroke();
   });
-  window.addEventListener('mousemove', e => {
+  canvas.addEventListener('mousemove', e => {
     x = e.offsetX;
     y = e.offsetY/2;
     if (isDrawing && !isDown) {
@@ -27,7 +29,7 @@ onMount(() => {
       ctx.stroke();
     }
   });
-  document.addEventListener('mouseup', e => {
+  canvas.addEventListener('mouseup', e => {
     if (isDrawing) {
       x = e.offsetX;
       y = e.offsetY/2;
@@ -61,9 +63,9 @@ onMount(() => {
   //     div.style.top = (mousePosition.y + offset[1]) + 'px';
   //   }
   // });
-  btn.addEventListener("click", (e) => {
-    getPixels();
-  })
+  // btn.addEventListener("click", (e) => {
+  //   getPixels();
+  // })
   function getPixels() {
     const style = canvas.style
     console.log(canvas);
@@ -71,7 +73,12 @@ onMount(() => {
     return ctx.getImageData(style.left, style.top, 300, 300);
   };
   x_btn.addEventListener("click", (e) => {
-    canvas_container.style.visibility = "hidden"
+    if (closed) {
+      canvas_container.style.left = 0 + "px"
+    } else {
+      canvas_container.style.left = -342 + "px"
+    }
+    closed = !closed
   })
 });
 </script>
@@ -80,22 +87,25 @@ onMount(() => {
 </svelte:head>
 <div id="canvas_container" bind:this={canvas_container}>
   <canvas id="canvas" bind:this={canvas}></canvas>
-  <button bind:this={btn}>dataurl</button>
+  <!-- <button bind:this={btn}>dataurl</button> -->
+  <label>星座名</label>
   <input />
-  <button bind:this={btn}>send</button>
-  <button id="x_btn" bind:this={x_btn}>x</button>
+  <button bind:this={btn_send}>生成</button>
+  <button id="x_btn" bind:this={x_btn}>{closed? ">": "<"}</button>
 </div>
 <style>
 #canvas_container {
   border: 2px solid black;
   position: absolute;
   width: 300px;
-  height: 300px;
+  height: 320px;
   padding: 20px;
-  right: left( 95vw - 300px );
+  left: 0px;
   top: 10px;
   background-color: rgba(244, 244, 244, 0.5);
   z-index: 1;
+  transition: all 0.3s ease;
+  visibility: hidden; /*後で消す*/
 }
 #canvas {
   border: 2px solid black;
@@ -105,15 +115,14 @@ onMount(() => {
 #x_btn {
   position: absolute;
   top: 0;
-  right: 0;
+  right: -1.2rem;
   border: none;
-  border-radius: 50%;
-  background: none;
-  /* font-size: 1.2rem; */
+  background: rgb(244, 244, 244, 0.5);
   width: 1.2rem;
   height: 1.2rem;
+  color: white;
 }
 #x_btn:hover {
-  background: #ccc
+  background: #333
 }
 </style>

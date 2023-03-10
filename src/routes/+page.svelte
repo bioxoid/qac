@@ -41,49 +41,67 @@ onMount(async () => {
   scene.rotation.x = -(Math.PI/2); //+(Math.PI*23.4)/(2*90) 地軸
   controls.update();
   //星座 処理
-  var sizes = [];
-  var positions = [];
-  var colors = [];
-  var color = new THREE.Color();
-  stars.forEach((star) =>{
-    positions.push(star.x, star.y, star.z)
-    colors.push(star.r/255, star.g/255, star.b/255)
-    sizes.push(star.size)
-  })
-  //星全部
-  // for (let i=8, 0<=i, i++) {
-  var geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions, 3));
-  geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(colors), 3));
-  // geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
-  geometry.computeBoundingSphere();
-  var material = new THREE.PointsMaterial({
-      // size: 5,
+  // var sizes = [];
+  // var positions = [];
+  // var colors = [];
+  // stars.forEach((star) =>{
+  //   positions.push(star.x, star.y, star.z)
+  //   colors.push(star.r/255, star.g/255, star.b/255)
+  //   sizes.push(star.size)
+  // })
+  // 星全部
+  for (let i=10; 0<=i; i--) {
+    var sizes = [];
+    var positions = [];
+    var colors = [];
+    stars.forEach((star) =>{
+      if (star.size == i)
+        positions.push(star.x, star.y, star.z);
+        colors.push(star.r/255, star.g/255, star.b/255);
+        // sizes.push(star.size);
+    })
+    var geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(colors), 3));
+    // geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
+    geometry.computeBoundingSphere();
+    var material = new THREE.PointsMaterial({
+      size: i,
       sizeAttenuation: true,
       vertexColors: true,
       depthWrite:true
     });
     let points = new THREE.Points(geometry, material);
     scene.add(points);
-  // }
-//   const geometry = new THREE.CircleGeometry( 5, 32 );
-//   const material = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
-  // const circle = new THREE.Mesh( geometry, material );
-  // scene.add( circle );
+  }
+  // stars.forEach((star) => {
+  //   const geometry = new THREE.CircleGeometry( star.size, 32 );
+  //   const material = new THREE.MeshBasicMaterial( { color: (star.r/255, star.g/255, star.b/255) } );
+  //   const circle = new THREE.Mesh( geometry, material );
+  //   circle.position.x = star.x
+  //   scene.add( circle );
+  // })
   //星座線 描画
   var lines = []
   const keys = Object.keys(CONSTELLATIONS);
+  function getStarFromId(id) {
+    var star_of_id;
+    var isFound = false;
+    stars.forEach((star) => {
+      if (!isFound && id == star.id) { isFound = true; star_of_id = star }
+    })
+    return star_of_id
+  }
   keys.forEach((key)=> {
     let lines_arr = CONSTELLATIONS[key]
     CONSTELLATIONS[key].flat().forEach((id) => { //データベースに保存するときにこの処理(id->position)をやっとく
-      stars.forEach((star) => {
-        if (id == star.id) { lines.push(star.x, star.y, star.z) }
-      })
+      let star = getStarFromId(id)
+      lines.push(star.x, star.y, star.z)
     })
   })
-  var material = new THREE.LineBasicMaterial({ color: "#FED75D" });
   var geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(lines, 3));
+  var material = new THREE.LineBasicMaterial({ color: "#FED75D" });
   var starLines = new THREE.LineSegments(geometry, material);
   scene.add(starLines);
   //北極星
@@ -91,21 +109,28 @@ onMount(async () => {
   var material = new THREE.MeshBasicMaterial({ color: "#fff" });
   var sphere = new THREE.Mesh( geometry, material );
   sphere.position.z = 1000
-  scene.add( sphere );
-  //星座の絵貼り付ける球
+  // scene.add( sphere );
+  //透明な球 星座絵のテクスチャ貼るかも
   var geometry = new THREE.SphereGeometry(990, 100, 100); //実装時に990->1000に変える、0.7->0に変える
   var material = new THREE.MeshLambertMaterial({ transparent: true, opacity: 0.8 });
-  const loader = new THREE.TextureLoader();
-  const textures_path = ["Ori", "Cap", "Gem", "Ari"]
-  const textures = []
-  // material.transparent = true
+  // const loader = new THREE.TextureLoader();
+  // const textures_path = ["Ori", "Cap", "Gem", "Ari"]
+  // const textures = []
   var sphere = new THREE.Mesh( geometry, material );
   scene.add(sphere);
-  var geometry = new THREE.PlaneGeometry( 10000, 10000 );
-  var material = new THREE.MeshBasicMaterial( {color: "#1F365A", side: THREE.DoubleSide} );
-  var plane = new THREE.Mesh( geometry, material );
+  //
+  // var geometry = new THREE.PlaneGeometry(100, 100*.75);
+  // var material = new THREE.MeshLambertMaterial({map: loader.load("https://i.imgur.com/afCUu06.png")});
+  // var orion = new THREE.Mesh(geometry, material);
+  // const position_of_star_of_ori = CONSTELLATIONS["Ori"][0][0];
+  // const orion_position = getStarFromId(position_of_star_of_ori)
+  // scene.add(orion);
+  //地面
+  // var geometry = new THREE.PlaneGeometry( 10000, 10000 );
+  // var material = new THREE.MeshBasicMaterial( {color: "#1F365A", side: THREE.DoubleSide} );
+  // var plane = new THREE.Mesh( geometry, material );
   // plane.rotation.x = Math.PI / 2;
-  var rc = new THREE.Raycaster();
+  // var rc = new THREE.Raycaster();
 
   // scene.add( plane );
 
@@ -118,20 +143,20 @@ onMount(async () => {
   // }
   //gui
   const gui = new GUI()
-  const starFolder = gui.addFolder('Star')
-  starFolder.add(points.rotation, 'x', 0, Math.PI * 2)
-  starFolder.add(points.rotation, 'y', 0, Math.PI * 2)
-  starFolder.add(points.rotation, 'z', 0, Math.PI * 2)
-  starFolder.open()
-  const cameraFolder = gui.addFolder('Camera')
-  cameraFolder.add(camera.position, 'z', 0, 10)
-  cameraFolder.open()
-  const lineFolder = gui.addFolder('Star Lines')
+  // const starFolder = gui.addFolder('Star')
+  // starFolder.add(points.rotation, 'x', 0, Math.PI * 2)
+  // starFolder.add(points.rotation, 'y', 0, Math.PI * 2)
+  // starFolder.add(points.rotation, 'z', 0, Math.PI * 2)
+  // starFolder.open()
+  // const cameraFolder = gui.addFolder('Camera lookat')
+  // cameraFolder.add(camera.position, 'z', 0, 10)
+  // cameraFolder.open()
+  const lineFolder = gui.addFolder('Star Lines color')
   lineFolder.add(starLines.material.color, 'r', 0, 1)
   lineFolder.add(starLines.material.color, 'g', 0, 1)
   lineFolder.add(starLines.material.color, 'b', 0, 1)
   lineFolder.open()
-  const sceneFolder = gui.addFolder('Scene')
+  const sceneFolder = gui.addFolder('Scene rotation')
   sceneFolder.add(scene.rotation, 'x', -Math.PI, Math.PI)
   sceneFolder.add(scene.rotation, 'y', -Math.PI, Math.PI)
   sceneFolder.add(scene.rotation, 'z', -Math.PI, Math.PI)
