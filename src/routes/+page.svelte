@@ -151,16 +151,16 @@ onMount(async () => {
   // const cameraFolder = gui.addFolder('Camera lookat')
   // cameraFolder.add(camera.position, 'z', 0, 10)
   // cameraFolder.open()
-  const lineFolder = gui.addFolder('Star Lines color')
+  const lineFolder = gui.addFolder('Star Lines color(なぜか255で割られてる)')
   lineFolder.add(starLines.material.color, 'r', 0, 1)
   lineFolder.add(starLines.material.color, 'g', 0, 1)
   lineFolder.add(starLines.material.color, 'b', 0, 1)
-  lineFolder.open()
+  // lineFolder.open()
   const sceneFolder = gui.addFolder('Scene rotation')
   sceneFolder.add(scene.rotation, 'x', -Math.PI, Math.PI)
   sceneFolder.add(scene.rotation, 'y', -Math.PI, Math.PI)
   sceneFolder.add(scene.rotation, 'z', -Math.PI, Math.PI)
-  sceneFolder.open()
+  // sceneFolder.open()
   document.body.appendChild( renderer.domElement );
   // renderer.domElement.addEventListener("pointermove", onMouseMove);
   renderer.render(scene, camera);
