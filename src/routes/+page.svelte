@@ -170,7 +170,7 @@ onMount(async () => {
 });
 </script>
 <svelte:head>
-  <title>星座</title>
+  <title>量子星座生成アプリ</title>
   <meta property="og:url" content="https://qac.vercel.app/">
   <meta property="og:title" content="量子星座生成アプリ">
   <meta property="og:description" content="💫量子アニーリングを使ってあなたのお絵描きから星座を生成するアプリです💫">

@@ -6,7 +6,7 @@ let canvas_container
 let btn;
 let ctx;
 let btn_send
-let x_btn;
+let btn_toggle_closed;
 let closed = false;
 onMount(() => {
   let isDrawing = false;
@@ -72,13 +72,16 @@ onMount(() => {
     console.log(ctx.getImageData(0, 0, 300, 300));
     return ctx.getImageData(style.left, style.top, 300, 300);
   };
-  x_btn.addEventListener("click", (e) => {
+  btn_toggle_closed.addEventListener("click", (e) => {
     if (closed) {
       canvas_container.style.left = 0 + "px"
     } else {
-      canvas_container.style.left = -342 + "px"
+      canvas_container.style.left = -322 + "px"
     }
     closed = !closed
+  })
+  btn_send.addEventListener("click", (e) => {
+    alert("まだできてません...")
   })
 });
 </script>
@@ -86,20 +89,21 @@ onMount(() => {
   <!-- This page is created using https://github.com/mukti107/Method-Draw-->
 </svelte:head>
 <div id="canvas_container" bind:this={canvas_container}>
+  <span>お絵描き</span>
   <canvas id="canvas" bind:this={canvas}></canvas>
   <!-- <button bind:this={btn}>dataurl</button> -->
   <label for="name">星座名</label>
   <input id="name" />
   <button bind:this={btn_send}>生成</button>
-  <button id="x_btn" bind:this={x_btn}>{closed? ">": "<"}</button>
+  <button id="btn_toggle_closed" bind:this={btn_toggle_closed}>{closed? ">": "<"}</button>
 </div>
 <style>
 #canvas_container {
   border: 2px solid black;
   position: absolute;
   width: 300px;
-  height: 320px;
-  padding: 20px;
+  height: 342px;
+  padding: 10px;
   left: 0px;
   top: 10px;
   background-color: rgba(244, 244, 244, 0.5);
@@ -111,7 +115,7 @@ onMount(() => {
   width: 300px;
   height: 300px;
 }
-#x_btn {
+#btn_toggle_closed {
   position: absolute;
   top: 0;
   right: -1.2rem;
@@ -121,7 +125,7 @@ onMount(() => {
   height: 1.2rem;
   color: white;
 }
-#x_btn:hover {
+#btn_toggle_closed:hover {
   background: #333
 }
 </style>
