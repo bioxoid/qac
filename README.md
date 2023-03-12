@@ -27,6 +27,7 @@ src/routes/+page.svelteが星座のページ
 - [ ] マウスがcanvas外に出た時の処理
 - [ ] リサイズ
 - [x] 神話、ChatGPTか人かコンビ
+- [ ] アニーリング中に神話、作者名とか入力してもらう
 
 ## めも
 <https://zenn.dev/karno/articles/091f9f23dab30c#>  

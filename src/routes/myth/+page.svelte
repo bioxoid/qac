@@ -1,6 +1,4 @@
 <script>
-// @ts-nocheck
-
 const OPENAI_API_KEY = "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";
 let c_name = "";
 let added_content = "";

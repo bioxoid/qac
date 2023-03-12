@@ -6,17 +6,18 @@ import * as THREE from "three"
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { onMount } from 'svelte';
-import { CONSTELLATIONS } from "$lib/constellations.ts"
+import { loadCstl } from "$lib/constellationLoader.ts"
 
 import {Ori, Ari, Gem, Cap} from "$lib/assets/textures.ts"
 
-let drawing = ""
+let drawing="";
+let image_input;
 
 onMount(async () => {
   const stars_json = await import("../stars.json")
   const stars = stars_json.default
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x151515);
+  scene.background = new THREE.Color("#151515");
   let size = {
     width: window.innerWidth,
     height: window.innerHeight,
@@ -34,7 +35,7 @@ onMount(async () => {
   camera.position.set(0, 0, 1)
   scene.rotation.x = -(Math.PI/2); //+(Math.PI*23.4)/(2*90) 地軸
   controls.update();
-  //星座 処理
+  //星 処理
   // var sizes = [];
   // var positions = [];
   // var colors = [];
@@ -45,19 +46,16 @@ onMount(async () => {
   // })
   // 星全部
   for (let i=10; 0<=i; i--) {
-    var sizes = [];
     var positions = [];
     var colors = [];
     stars.forEach((star) =>{
       if (star.size == i)
         positions.push(star.x, star.y, star.z);
         colors.push(star.r/255, star.g/255, star.b/255);
-        // sizes.push(star.size);
     })
     var geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions, 3));
-    geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(colors), 3));
-    // geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
+    geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     geometry.computeBoundingSphere();
     var material = new THREE.PointsMaterial({
       size: i,
@@ -68,16 +66,11 @@ onMount(async () => {
     let points = new THREE.Points(geometry, material);
     scene.add(points);
   }
-  // stars.forEach((star) => {
-  //   const geometry = new THREE.CircleGeometry( star.size, 32 );
-  //   const material = new THREE.MeshBasicMaterial( { color: (star.r/255, star.g/255, star.b/255) } );
-  //   const circle = new THREE.Mesh( geometry, material );
-  //   circle.position.x = star.x
-  //   scene.add( circle );
-  // })
   //星座線 描画
+  const CONSTELLATIONS = await import("../constellations.json")
   var lines = []
   const keys = Object.keys(CONSTELLATIONS);
+  keys.splice(keys.indexOf("default"), 1);
   function getStarFromId(id) {
     let star_of_id;
     stars.forEach((star) => {
@@ -86,7 +79,6 @@ onMount(async () => {
     return star_of_id
   }
   keys.forEach((key)=> {
-    let lines_arr = CONSTELLATIONS[key]
     CONSTELLATIONS[key].flat().forEach((id) => { //データベースに保存するときにこの処理(id->position)をやっとく
       let star = getStarFromId(id)
       lines.push(star.x, star.y, star.z)
@@ -94,7 +86,7 @@ onMount(async () => {
   })
   var geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(lines, 3));
-  var material = new THREE.LineBasicMaterial({ color: "#FED75D" });
+  var material = new THREE.LineBasicMaterial({ color: "#151515" });
   const starLines = new THREE.LineSegments(geometry, material);
   scene.add(starLines);
   //北極星
@@ -103,21 +95,14 @@ onMount(async () => {
   var sphere = new THREE.Mesh( geometry, material );
   sphere.position.z = 1000
   // scene.add( sphere );
-  //透明な球 星座絵のテクスチャ貼るかも
-  var geometry = new THREE.SphereGeometry(990, 100, 100); //実装時に990->1000に変える、0.7->0に変える
+  //透明な球
+  var geometry = new THREE.SphereGeometry(990, 100, 100);
   var material = new THREE.MeshLambertMaterial({ transparent: true, opacity: 0.8 });
   // const loader = new THREE.TextureLoader();
   // const textures_path = ["Ori", "Cap", "Gem", "Ari"]
   // const textures = []
   var sphere = new THREE.Mesh( geometry, material );
   scene.add(sphere);
-  //オリオン座
-  // var geometry = new THREE.PlaneGeometry(100, 100*.75);
-  // var material = new THREE.MeshLambertMaterial({map: loader.load("https://i.imgur.com/afCUu06.png")});
-  // var orion = new THREE.Mesh(geometry, material);
-  // const position_of_star_of_ori = CONSTELLATIONS["Ori"][0][0];
-  // const orion_position = getStarFromId(position_of_star_of_ori)
-  // scene.add(orion);
   //地面
   // var geometry = new THREE.PlaneGeometry( 10000, 10000 );
   // var material = new THREE.MeshBasicMaterial( {color: "#1F365A", side: THREE.DoubleSide} );
@@ -134,32 +119,76 @@ onMount(async () => {
   //   rc.setFromCamera(m, camera);
   //   intscs = rc.intersectObjects()
   // }
+  document.getElementById("drawtest").addEventListener("click", () => {
+    var geometry = new THREE.PlaneGeometry( 300, 300 );
+    var material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, transparent: true });
+    const encoded_canvas = drawing.toDataURL("image/png", 1)
+    material.map = new THREE.TextureLoader().load(encoded_canvas)
+    var plane = new THREE.Mesh(geometry, material);
+    plane.rotation.set(-Math.PI/2, -Math.PI, Math.PI)
+    plane.position.set(0,1000,0)
+    scene.add(plane);
+    const textureRotationFolder = gui.addFolder('Texture Rotation')
+    textureRotationFolder.add(plane.rotation, 'x', -Math.PI, Math.PI)
+    textureRotationFolder.add(plane.rotation, 'y', -Math.PI, Math.PI)
+    textureRotationFolder.add(plane.rotation, 'z', -Math.PI, Math.PI)
+    textureRotationFolder.open()
+    const texturePositionFolder = gui.addFolder('Texture Position')
+    texturePositionFolder.add(plane.position, 'x', -1000, 1000)
+    texturePositionFolder.add(plane.position, 'y', -1000, 1000)
+    texturePositionFolder.add(plane.position, 'z', -1000, 1000)
+    texturePositionFolder.open()
+  })
+  document.getElementById("picturetest").addEventListener("click", () => {
+    const file = image_input.files[0];
+    var reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = function (e) {
+      var image = new Image()
+      image.src = e.target.result
+      image.onload = function () {
+        var geometry = new THREE.PlaneGeometry( this.width, this.height );
+        var material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, transparent: true });
+        var userImageURL = URL.createObjectURL(file);
+        material.map = new THREE.TextureLoader().load(userImageURL)
+        var plane = new THREE.Mesh(geometry, material);
+        plane.rotation.set(-Math.PI/2, -Math.PI, Math.PI)
+        plane.position.set(0,1000,0)
+        scene.add(plane);
+        const textureRotationFolder = gui.addFolder('Image Texture Rotation')
+        textureRotationFolder.add(plane.rotation, 'x', -Math.PI, Math.PI)
+        textureRotationFolder.add(plane.rotation, 'y', -Math.PI, Math.PI)
+        textureRotationFolder.add(plane.rotation, 'z', -Math.PI, Math.PI)
+        textureRotationFolder.open()
+        const texturePositionFolder = gui.addFolder('Image Texture Position')
+        texturePositionFolder.add(plane.position, 'x', -1000, 1000)
+        texturePositionFolder.add(plane.position, 'y', -1000, 1000)
+        texturePositionFolder.add(plane.position, 'z', -1000, 1000)
+        texturePositionFolder.open()
+      };
+    };
+  })
   const dat = await import('dat.gui')
   const gui = new dat.GUI()
-  // const starFolder = gui.addFolder('Star')
-  // starFolder.add(points.rotation, 'x', 0, Math.PI * 2)
-  // starFolder.add(points.rotation, 'y', 0, Math.PI * 2)
-  // starFolder.add(points.rotation, 'z', 0, Math.PI * 2)
-  // starFolder.open()
-  // const cameraFolder = gui.addFolder('Camera lookat')
-  // cameraFolder.add(camera.position, 'z', 0, 10)
-  // cameraFolder.open()
+  const cameraFolder = gui.addFolder('Camera lookat')
+  cameraFolder.add(camera.position, 'x', -10, 10)
+  cameraFolder.add(camera.position, 'y', -10, 10)
+  cameraFolder.add(camera.position, 'z', -10, 10)
   const lineFolder = gui.addFolder('Star Lines color(なぜか255で割られてる)')
   lineFolder.add(starLines.material.color, 'r', 0, 1)
   lineFolder.add(starLines.material.color, 'g', 0, 1)
   lineFolder.add(starLines.material.color, 'b', 0, 1)
-  // lineFolder.open()
+  lineFolder.open()
   const sceneFolder = gui.addFolder('Scene rotation')
   sceneFolder.add(scene.rotation, 'x', -Math.PI, Math.PI)
   sceneFolder.add(scene.rotation, 'y', -Math.PI, Math.PI)
   sceneFolder.add(scene.rotation, 'z', -Math.PI, Math.PI)
   document.body.appendChild( renderer.domElement );
-  // renderer.domElement.addEventListener("pointermove", onMouseMove);
   renderer.render(scene, camera);
   function animate() {
-    requestAnimationFrame( animate );
     controls.update();
     renderer.render( scene, camera );
+    requestAnimationFrame( animate );
   }
   animate()
 });
@@ -180,7 +209,9 @@ onMount(async () => {
 </svelte:head>
 
 <div id="container">
-  <CanvasEditor bind:canvas={drawing}  />
+  <CanvasEditor bind:canvas={drawing} bind:im_file={image_input} />
+  <button style="position: absolute; z-index: 1; left: calc(4rem + 20px); top: 15px" id="drawtest">お絵描き描画</button>
+  <button style="position: absolute; z-index: 1; left: calc(10rem + 20px); top: 15px" id="picturetest">写真描画</button>
   <!-- <DevelopMode /> -->
 </div>
 <style>

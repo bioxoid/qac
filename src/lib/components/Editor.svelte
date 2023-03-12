@@ -2,29 +2,30 @@
 // @ts-nocheck
 import { onMount } from 'svelte';
 export let canvas;
-let div;
+export let png;
 let canvas_container
-let btn;
-let ctx;
-let btn_send
-let btn_toggle_closed;
+export let im_file;
 let closed = false;
+const canvas_size = {x: 300, y: 300};
 onMount(() => {
+  const canvas = document.getElementById("canvas")
   let isDrawing = false;
   let x = 0;
   let y = 0;
-  ctx = canvas.getContext('2d');
+  var ctx = canvas.getContext('2d');
+  ctx.strokeStyle = "#fff";
+  ctx.lineWidth = 3;
   canvas.addEventListener('mousedown', e => {
     isDrawing = true;
     x = e.offsetX;
-    y = e.offsetY/2;
+    y = e.offsetY;
     ctx.moveTo(x, y);
     ctx.lineTo(x, y);
     ctx.stroke();
   });
   canvas.addEventListener('mousemove', e => {
     x = e.offsetX;
-    y = e.offsetY/2;
+    y = e.offsetY;
     if (isDrawing && !isDown) {
       ctx.lineTo(x, y);
       ctx.stroke();
@@ -33,7 +34,7 @@ onMount(() => {
   canvas.addEventListener('mouseup', e => {
     if (isDrawing) {
       x = e.offsetX;
-      y = e.offsetY/2;
+      y = e.offsetY;
       ctx.lineTo(x, y);
       ctx.stroke();
       isDrawing = false;
@@ -65,10 +66,9 @@ onMount(() => {
   //   }
   // });
   function getPixels() {
-    const rect = canvas.getBoundingClientRect();
-    return ctx.getImageData(rect.left, rect.top, 300, 300);
+    return ctx.getImageData(0, 0, canvas_size.x, canvas_size.y);
   };
-  btn_toggle_closed.addEventListener("click", (e) => {
+  document.getElementById("btn_toggle_closed").addEventListener("click", (e) => {
     const rect = canvas_container.getBoundingClientRect();
     if (closed) {
       canvas_container.style.left = 0 + "px"
@@ -77,9 +77,35 @@ onMount(() => {
     }
     closed = !closed
   })
-  btn_send.addEventListener("click", (e) => {
-    canvas = getPixels();
+  document.getElementById("send").addEventListener("click", () => {
+    let image_data = getPixels();
+    const data = image_data.data
+    const drawn_pixels = [];
+    const drawn_pixel_ids = [];
+    var row = 0;
+    for (let i=3; i <= data.length; i+=4) {
+      let pixel_number = Math.floor(i/4);
+      if (pixel_number>=canvas_size.x*row) { drawn_pixels.push([]); row += 1; }
+      if (data[i] !== 0) {
+        drawn_pixels[row-1].push(1)
+        drawn_pixel_ids.push(pixel_number)
+      } else {
+        drawn_pixels[row-1].push(0)
+      }
+    }
+    png=canvas.toDataURL("image/png", 1)
+    console.log(png);
   })
+  // document.getElementById("enable_pen").addEventListener("click", () => {
+  //   ctx.strokeStyle = "#FED75D"
+  //   ctx.globalCompositeOperation = 'source-over'
+  // })
+  // document.getElementById("enable_eraser").addEventListener("click", () => {
+  //   ctx.globalCompositeOperation = 'destination-out'
+  // })
+  // document.getElementById("all_eraser").addEventListener("click", () => {
+  //   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // })
 });
 </script>
 <svelte:head>
@@ -87,19 +113,23 @@ onMount(() => {
 </svelte:head>
 <div id="canvas_container" bind:this={canvas_container}>
   <span>お絵描き</span>
-  <canvas id="canvas" bind:this={canvas}></canvas>
+  <canvas id="canvas" width="{canvas_size.x}px" height="{canvas_size.y}px" bind:this={canvas}></canvas>
   <!-- <button bind:this={btn}>dataurl</button> -->
   <label for="name">星座名</label>
   <input id="name" />
-  <button bind:this={btn_send}>生成</button>
-  <button id="btn_toggle_closed" bind:this={btn_toggle_closed}>{closed? ">": "<"}</button>
+  <button id="send">生成</button>
+  <input type="file" accept="image/png" bind:this={im_file}>
+  <button id="btn_toggle_closed">{closed? ">": "<"}</button>
+  <!-- <button id="enable_pen">ペン</button>
+  <button id="enable_eraser">消しゴム</button>
+  <button id="all_eraser">全消し</button> -->
 </div>
 <style>
 #canvas_container {
   border: 2px solid black;
   position: absolute;
   width: 300px;
-  height: 342px;
+  height: 400px;
   padding: 10px;
   left: 0px;
   top: 10px;
@@ -109,8 +139,6 @@ onMount(() => {
 }
 #canvas {
   border: 2px solid black;
-  width: 300px;
-  height: 300px;
 }
 #btn_toggle_closed {
   position: absolute;
