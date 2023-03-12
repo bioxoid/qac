@@ -66,8 +66,6 @@ onMount(() => {
   // });
   function getPixels() {
     const rect = canvas.getBoundingClientRect();
-    console.log(canvas);
-    console.log(ctx.getImageData(0, 0, 300, 300));
     return ctx.getImageData(rect.left, rect.top, 300, 300);
   };
   btn_toggle_closed.addEventListener("click", (e) => {
@@ -77,12 +75,10 @@ onMount(() => {
     } else {
       canvas_container.style.left = -rect.width + "px"
     }
-    console.log(rect);
     closed = !closed
   })
   btn_send.addEventListener("click", (e) => {
     canvas = getPixels();
-    console.log(canvas);
   })
 });
 </script>

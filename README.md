@@ -26,12 +26,12 @@ src/routes/+page.svelteが星座のページ
 - [ ] ローディングアニメーション
 - [ ] マウスがcanvas外に出た時の処理
 - [ ] リサイズ
-- [ ] 神話、ChatGPTか人かコンビ
+- [x] 神話、ChatGPTか人かコンビ
 
 ## めも
 <https://zenn.dev/karno/articles/091f9f23dab30c#>  
 <https://github.com/Stellarium/stellarium>
 
 ## 案
-星座線を[fat line](https://github.com/mrdoob/three.js/blob/master/examples/webgl_lines_fat.html)に?
-ローディングページ: いらすとやから適当に20枚くらい拾ってきて星座にしたやつを、before,afterみたいにする
+星座線を[fat line](https://github.com/mrdoob/three.js/blob/master/examples/webgl_lines_fat.html)に?  
+ローディングページ: いらすとやから適当に20枚くらい拾ってきて星座にしたやつを、before,afterみたいにする  

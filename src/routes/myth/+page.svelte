@@ -35,7 +35,6 @@ async function gptIt() {
   })
   const data = await res.json();
   content = data.choices[0].message.content;
-  console.log(data);
   console.log("Content received!")
 }
 
