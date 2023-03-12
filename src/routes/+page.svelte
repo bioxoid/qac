@@ -10,8 +10,6 @@ import { CONSTELLATIONS } from "$lib/constellations.ts"
 
 import {Ori, Ari, Gem, Cap} from "$lib/assets/textures.ts"
 
-let data;
-let ip;
 let drawing = ""
 
 onMount(async () => {
@@ -19,14 +17,12 @@ onMount(async () => {
   const stars = stars_json.default
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x151515);
-
   let size = {
     width: window.innerWidth,
     height: window.innerHeight,
     ratio: window.innerWidth / window.innerHeight,
   }
-
-  const camera = new THREE.PerspectiveCamera(50, size.ratio, 5, 10000)
+  const camera = new THREE.PerspectiveCamera(50, size.ratio, 1, 10000) //視野角, アスペクト比, near, far
 
   const renderer = new THREE.WebGLRenderer( { antialias: true , preserveDrawingBuffer: true } );
   renderer.setSize( size.width, size.height );
@@ -83,10 +79,9 @@ onMount(async () => {
   var lines = []
   const keys = Object.keys(CONSTELLATIONS);
   function getStarFromId(id) {
-    var star_of_id;
-    var isFound = false;
+    let star_of_id;
     stars.forEach((star) => {
-      if (!isFound && id == star.id) { isFound = true; star_of_id = star }
+      if (id == star.id) { star_of_id = star }
     })
     return star_of_id
   }
@@ -116,7 +111,7 @@ onMount(async () => {
   // const textures = []
   var sphere = new THREE.Mesh( geometry, material );
   scene.add(sphere);
-  //
+  //オリオン座
   // var geometry = new THREE.PlaneGeometry(100, 100*.75);
   // var material = new THREE.MeshLambertMaterial({map: loader.load("https://i.imgur.com/afCUu06.png")});
   // var orion = new THREE.Mesh(geometry, material);
@@ -190,7 +185,7 @@ onMount(async () => {
 </div>
 <style>
 	:global(body) {
-    /* overflow: hidden; */
+    overflow: hidden;
 		margin: 0;
 	}
   /* #container {

@@ -1,4 +1,5 @@
 <script>
+// @ts-nocheck
 import { onMount } from 'svelte';
 export let canvas;
 let div;
@@ -63,25 +64,25 @@ onMount(() => {
   //     div.style.top = (mousePosition.y + offset[1]) + 'px';
   //   }
   // });
-  // btn.addEventListener("click", (e) => {
-  //   getPixels();
-  // })
   function getPixels() {
-    const style = canvas.style
+    const rect = canvas.getBoundingClientRect();
     console.log(canvas);
     console.log(ctx.getImageData(0, 0, 300, 300));
-    return ctx.getImageData(style.left, style.top, 300, 300);
+    return ctx.getImageData(rect.left, rect.top, 300, 300);
   };
   btn_toggle_closed.addEventListener("click", (e) => {
+    const rect = canvas_container.getBoundingClientRect();
     if (closed) {
       canvas_container.style.left = 0 + "px"
     } else {
-      canvas_container.style.left = -322 + "px"
+      canvas_container.style.left = -rect.width + "px"
     }
+    console.log(rect);
     closed = !closed
   })
   btn_send.addEventListener("click", (e) => {
-    alert("まだできてません...")
+    canvas = getPixels();
+    console.log(canvas);
   })
 });
 </script>
