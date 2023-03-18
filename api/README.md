@@ -4,7 +4,7 @@ python venv .env
 pip install -r requirements.txt
 ```
 ```zsh
-uvicorn main:app --reload #アプリをlocalhostで走らせる
+uvicorn main:app --reload
 ```
 サーバー: FastAPI  
 main.py: API作る場所  

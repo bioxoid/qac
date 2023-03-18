@@ -1,0 +1,6 @@
+fastapi
+numpy
+requests
+Pillow
+uvicorn
+dwave-system
