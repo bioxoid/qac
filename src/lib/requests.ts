@@ -1,5 +1,3 @@
-import axios from "axios";
-
 export async function startQA(json: JSON) {
   const json_text = JSON.stringify(json);
   const res = await fetch('http://localhost:8000/', {
