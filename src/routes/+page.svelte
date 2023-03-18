@@ -77,14 +77,14 @@ onMount(async () => {
     })
     return star_of_id
   }
-  // const keys = Object.keys(CONSTELLATIONS); // const keys = Object.keys(CONSTELLATIONS);
-  // keys.splice(keys.indexOf("default"), 1);
-  // keys.forEach((key)=> {
-  //   CONSTELLATIONS[key].flat().forEach((id) => { //データベースに保存するときにこの処理(id->position)をやっとく
-  //     let star = getStarFromId(id)
-  //     lines.push(star.x, star.y, star.z)
-  //   })
-  // })
+  const keys = Object.keys(CONSTELLATIONS); // const keys = Object.keys(CONSTELLATIONS);
+  keys.splice(keys.indexOf("default"), 1);
+  keys.forEach((key)=> {
+    CONSTELLATIONS[key].flat().forEach((id) => { //データベースに保存するときにこの処理(id->position)をやっとく
+      let star = getStarFromId(id)
+      lines.push(star.x, star.y, star.z)
+    })
+  })
   constellations.flat().flat().forEach((id) => { //データベースに保存するときにこの処理(id->position)をやっとく
       let star = getStarFromId(id)
       lines.push(star.x, star.y, star.z)
@@ -114,63 +114,9 @@ onMount(async () => {
   //   rc.setFromCamera(m, camera);
   //   intscs = rc.intersectObjects()
   // }
-  // document.getElementById("drawtest").addEventListener("click", () => {
-  //   var geometry = new THREE.PlaneGeometry( 300, 300 );
-  //   var material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, transparent: true });
-  //   const encoded_canvas = drawing;
-  //   material.map = new THREE.TextureLoader().load(encoded_canvas)
-  //   var plane = new THREE.Mesh(geometry, material);
-  //   plane.rotation.set(-Math.PI/2, -Math.PI, Math.PI)
-  //   plane.position.set(0,1000,0)
-  //   scene.add(plane);
-  //   const textureRotationFolder = gui.addFolder('Texture Rotation')
-  //   textureRotationFolder.add(plane.rotation, 'x', -Math.PI, Math.PI)
-  //   textureRotationFolder.add(plane.rotation, 'y', -Math.PI, Math.PI)
-  //   textureRotationFolder.add(plane.rotation, 'z', -Math.PI, Math.PI)
-  //   textureRotationFolder.open()
-  //   const texturePositionFolder = gui.addFolder('Texture Position')
-  //   texturePositionFolder.add(plane.position, 'x', -1000, 1000)
-  //   texturePositionFolder.add(plane.position, 'y', -1000, 1000)
-  //   texturePositionFolder.add(plane.position, 'z', -1000, 1000)
-  //   texturePositionFolder.open()
-  // })
-  // document.getElementById("picturetest").addEventListener("click", () => {
-  //   // console.log(camera.getWorldDirection())
-  //   const file = image_input.files[0];
-  //   var reader = new FileReader();
-  //   reader.readAsDataURL(file);
-  //   reader.onload = function (e) {
-  //     var image = new Image()
-  //     image.src = e.target.result
-  //     image.onload = function () {
-  //       var geometry = new THREE.PlaneGeometry( this.width, this.height );
-  //       var material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, transparent: true });
-  //       var userImageURL = URL.createObjectURL(file);
-  //       material.map = new THREE.TextureLoader().load(userImageURL)
-  //       var plane = new THREE.Mesh(geometry, material);
-  //       plane.rotation.set(-Math.PI/2, -Math.PI, Math.PI)
-  //       plane.position.set(0,1000,0)
-  //       scene.add(plane);
-  //       const textureRotationFolder = gui.addFolder('Image Texture Rotation')
-  //       textureRotationFolder.add(plane.rotation, 'x', -Math.PI, Math.PI)
-  //       textureRotationFolder.add(plane.rotation, 'y', -Math.PI, Math.PI)
-  //       textureRotationFolder.add(plane.rotation, 'z', -Math.PI, Math.PI)
-  //       textureRotationFolder.open()
-  //       const texturePositionFolder = gui.addFolder('Image Texture Position')
-  //       texturePositionFolder.add(plane.position, 'x', -1000, 1000)
-  //       texturePositionFolder.add(plane.position, 'y', -1000, 1000)
-  //       texturePositionFolder.add(plane.position, 'z', -1000, 1000)
-  //       texturePositionFolder.open()
-  //     };
-  //   };
-  // })
   const dat = await import('dat.gui');
   const gui = new dat.GUI()
-  const cameraFolder = gui.addFolder('Camera lookat')
-  cameraFolder.add(camera.rotation, 'x', -Math.PI, Math.PI)
-  cameraFolder.add(camera.rotation, 'y', -Math.PI, Math.PI)
-  cameraFolder.add(camera.rotation, 'z', -Math.PI, Math.PI)
-  const lineFolder = gui.addFolder('Star Lines color(なぜか255で割られてる)')
+  const lineFolder = gui.addFolder('Star Lines color')
   lineFolder.add(starLines.material.color, 'r', 0, 1)
   lineFolder.add(starLines.material.color, 'g', 0, 1)
   lineFolder.add(starLines.material.color, 'b', 0, 1)
@@ -187,8 +133,66 @@ onMount(async () => {
     requestAnimationFrame( animate );
   }
   animate()
+  document.getElementById("drawtest").addEventListener("click", () => {
+    var geometry = new THREE.PlaneGeometry( 300, 300 );
+    var material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, transparent: true });
+    const encoded_canvas = drawing;
+    material.map = new THREE.TextureLoader().load(encoded_canvas)
+    var plane = new THREE.Mesh(geometry, material);
+    // plane.rotation.set(-Math.PI/2, -Math.PI, Math.PI)
+    // plane.position.set(0,1000,0)
+    plane.rotation.set(0,0,0)
+    plane.position.set(0,0,-1000)
+    scene.add(plane);
+    const textureRotationFolder = gui.addFolder('Texture Rotation')
+    textureRotationFolder.add(plane.rotation, 'x', -Math.PI, Math.PI)
+    textureRotationFolder.add(plane.rotation, 'y', -Math.PI, Math.PI)
+    textureRotationFolder.add(plane.rotation, 'z', -Math.PI, Math.PI)
+    textureRotationFolder.open()
+    const texturePositionFolder = gui.addFolder('Texture Position')
+    texturePositionFolder.add(plane.position, 'x', -1000, 1000)
+    texturePositionFolder.add(plane.position, 'y', -1000, 1000)
+    texturePositionFolder.add(plane.position, 'z', -1000, 1000)
+    texturePositionFolder.open()
+  })
+  document.getElementById("picturetest").addEventListener("click", () => {
+    // console.log(camera.getWorldDirection())
+    const file = im_file.files[0];
+    var reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = function (e) {
+      var image = new Image()
+      image.src = e.target.result
+      image.onload = function () {
+        var geometry = new THREE.PlaneGeometry( this.width, this.height );
+        var material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, transparent: true });
+        var userImageURL = URL.createObjectURL(file);
+        material.map = new THREE.TextureLoader().load(userImageURL)
+        var plane = new THREE.Mesh(geometry, material);
+        // plane.rotation.set(-Math.PI/2, -Math.PI, Math.PI)
+        // plane.position.set(0,1000,0)
+        plane.rotation.set(0,0,0)
+        plane.position.set(0,0,-1000)
+        scene.add(plane);
+        const textureRotationFolder = gui.addFolder('Image Texture Rotation')
+        textureRotationFolder.add(plane.rotation, 'x', -Math.PI, Math.PI)
+        textureRotationFolder.add(plane.rotation, 'y', -Math.PI, Math.PI)
+        textureRotationFolder.add(plane.rotation, 'z', -Math.PI, Math.PI)
+        textureRotationFolder.open()
+        const texturePositionFolder = gui.addFolder('Image Texture Position')
+        texturePositionFolder.add(plane.position, 'x', -1000, 1000)
+        texturePositionFolder.add(plane.position, 'y', -1000, 1000)
+        texturePositionFolder.add(plane.position, 'z', -1000, 1000)
+        texturePositionFolder.open()
+        };
+    };
+  })  
   document.getElementById("toggle_mode").addEventListener("click", () => {
-    mode == "drawing" ? mode = "image" : mode="drawing";
+    if (mode == "drawing"){
+      mode = "image"
+    } else {
+      mode="drawing";
+    }
   })
   document.getElementById("btn_toggle_closed").addEventListener("click", (e) => {
     const rect = canvas_container.getBoundingClientRect();
@@ -271,17 +275,21 @@ onMount(async () => {
 <div id="container">
   <div id="canvas_container" bind:this={canvas_container}>
     <button id="toggle_mode">🫰</button>
-    {#if mode == "drawing"}
-    <span>お絵描き</span>
-    <CanvasEditor bind:png={drawing}/>
-    <!-- <button id="drawtest">お絵描き描画</button> -->
-    {:else if mode == "image"}
-    <span>画像</span>
-    <div>
-      <input type="file" accept="image/png" bind:this={im_file}>
+    <!-- {#if mode == "drawing"} -->
+    <div style="display: {mode == "drawing" ? "block" : "none"};">
+      <span>お絵描き</span>
+      <CanvasEditor bind:png={drawing}/>
+      <button id="drawtest">お絵描き描画</button>
     </div>
-    <!-- <button id="picturetest">写真描画</button> -->
-    {/if}
+    <!-- {:else if mode == "image"} -->
+    <div style="display: {mode == "drawing" ? "none" : "block"};">
+      <span>画像</span>
+      <div>
+        <input type="file" accept="image/png" bind:this={im_file}>
+      </div>
+      <button id="picturetest">写真描画</button>
+    </div>
+    <!-- {/if} -->
     <div>
       <label for="name">星座名</label>
       <input id="name" />
