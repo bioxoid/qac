@@ -29,16 +29,12 @@ onMount(async () => {
     var material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, transparent: true });
     material.map = new THREE.TextureLoader().load(c["image"])
     var plane = new THREE.Mesh(geometry, material);
-    // plane.rotation.set(-Math.PI/2, -Math.PI, Math.PI)
-    // plane.position.set(0,1000,0)
     let [x, y, z] = [c["image_coord"][0], c["image_coord"][1], c["image_coord"][2]]
     plane.position.set(x, y, z)
-    const degx = (x) => {return -Math.PI/2+(x/1000)*Math.PI};
-    const degy = (y) => {return -Math.PI+(y/1000)*Math.PI};
-    const degz = (z) => {return (z/1000)*Math.PI};
-    console.log([degx(x),degy(y),degz(z)])
-    plane.rotation.set(degx(x),degy(y),degz(z))
-    // plane.rotation.set(-Math.PI/2, -Math.PI, Math.PI)
+    const degx = () => {return Math.atan2(y,x)};
+    const degy = () => {return Math.atan2(x,y)};
+    const degz = () => {return Math.atan2(x,z)};
+    plane.rotation.set(degx(x,y),degy(y,z),degz(z,x))
     scene.add(plane);
     constellations.push(c["connected_stars"])
   })
@@ -48,8 +44,8 @@ onMount(async () => {
   renderer.setSize( window_size.width, window_size.height );
 
   const controls = new OrbitControls(camera, renderer.domElement)
-  // controls.maxPolarAngle = Math.PI/2;
   controls.minDistance = 1;
+  // controls.maxPolarAngle = Math.PI/2;
   // controls.maxDistance = 100;
   // var vector = new THREE.Vector3(); // create once and reuse it!
   // var vector = new THREE.Vector3( 0, 0, - 1 );
@@ -113,19 +109,11 @@ onMount(async () => {
   var sphere = new THREE.Mesh( geometry, material );
   scene.add(sphere);
   //地面
-  var geometry = new THREE.PlaneGeometry( 2000, 2000 );
-  var material = new THREE.MeshBasicMaterial( {color: "#1F365A", side: THREE.DoubleSide} );
-  var plane = new THREE.Mesh( geometry, material );
-  plane.rotation.z = Math.PI / 2;
-  // var rc = new THREE.Raycaster();
+  // var geometry = new THREE.PlaneGeometry( 2000, 2000 );
+  // var material = new THREE.MeshBasicMaterial( {color: "#1F365A", side: THREE.DoubleSide} );
+  // var plane = new THREE.Mesh( geometry, material );
+  // plane.rotation.z = Math.PI / 2;
   // scene.add( plane );
-  // var m = new THREE.Vector2();
-  // function onMouseMove(event) {
-  //   m.x = event.clientX
-  //   m.y = event.clientY
-  //   rc.setFromCamera(m, camera);
-  //   intscs = rc.intersectObjects()
-  // }
   const dat = await import('dat.gui');
   const gui = new dat.GUI()
   // const lineFolder = gui.addFolder('Star Lines color')
@@ -137,6 +125,16 @@ onMount(async () => {
   sceneFolder.add(scene.rotation, 'x', -Math.PI, Math.PI)
   sceneFolder.add(scene.rotation, 'y', -Math.PI, Math.PI)
   sceneFolder.add(scene.rotation, 'z', -Math.PI, Math.PI)
+  // const textureRotationFolder = gui.addFolder('Texture Rotation')
+  // textureRotationFolder.add(last_plane.rotation, 'x', -Math.PI, Math.PI)
+  // textureRotationFolder.add(last_plane.rotation, 'y', -Math.PI, Math.PI)
+  // textureRotationFolder.add(last_plane.rotation, 'z', -Math.PI, Math.PI)
+  // textureRotationFolder.open()
+  // const texturePositionFolder = gui.addFolder('Texture Position')
+  // texturePositionFolder.add(last_plane.position, 'x', -1000, 1000)
+  // texturePositionFolder.add(last_plane.position, 'y', -1000, 1000)
+  // texturePositionFolder.add(last_plane.position, 'z', -1000, 1000)
+  // texturePositionFolder.open()
   document.body.appendChild( renderer.domElement );
   renderer.render(scene, camera);
   function animate() {
@@ -151,8 +149,6 @@ onMount(async () => {
     const encoded_canvas = drawing;
     material.map = new THREE.TextureLoader().load(encoded_canvas)
     var plane = new THREE.Mesh(geometry, material);
-    // plane.rotation.set(-Math.PI/2, -Math.PI, Math.PI)
-    // plane.position.set(0,1000,0)
     plane.rotation.set(0,0,0)
     plane.position.set(0,0,-1000)
     scene.add(plane);
