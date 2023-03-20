@@ -4,7 +4,7 @@ import CanvasEditor from "$lib/components/Editor.svelte"
 import * as THREE from "three"
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { onMount } from 'svelte';
-import { loadCstl, saveCstl, startQA } from "$lib/requests.ts"
+import { loadCstl, saveCstl, startQA } from "$lib/requests"
 
 let drawing="";
 let canvas_container;
@@ -21,12 +21,26 @@ onMount(async () => {
     height: window.innerHeight,
     ratio: window.innerWidth / window.innerHeight,
   }
-  const sheets = await loadCstl();
-  var values = sheets.values;
-  values.splice(0, 1)
+  const constellations_data = await loadCstl();
+  console.log(constellations_data);
   var constellations = [];
-  values.forEach((row) => {
-    constellations.push(JSON.parse(row[5]))
+  constellations_data.forEach((c) => {
+    var geometry = new THREE.PlaneGeometry( c["image_size"]["x"], c["image_size"]["y"] );
+    var material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, transparent: true });
+    material.map = new THREE.TextureLoader().load(c["image"])
+    var plane = new THREE.Mesh(geometry, material);
+    // plane.rotation.set(-Math.PI/2, -Math.PI, Math.PI)
+    // plane.position.set(0,1000,0)
+    let [x, y, z] = [c["image_coord"][0], c["image_coord"][1], c["image_coord"][2]]
+    plane.position.set(x, y, z)
+    const degx = (x) => {return -Math.PI/2+(x/1000)*Math.PI};
+    const degy = (y) => {return -Math.PI+(y/1000)*Math.PI};
+    const degz = (z) => {return (z/1000)*Math.PI};
+    console.log([degx(x),degy(y),degz(z)])
+    plane.rotation.set(degx(x),degy(y),degz(z))
+    // plane.rotation.set(-Math.PI/2, -Math.PI, Math.PI)
+    scene.add(plane);
+    constellations.push(c["connected_stars"])
   })
   const camera = new THREE.PerspectiveCamera(50, window_size.ratio, 1, 10000) //視野角, アスペクト比, near, far
   camera.rotation.order = "YXZ"
@@ -43,7 +57,6 @@ onMount(async () => {
   // var angle = vector.angleTo( target.position );
 
   camera.position.set(0, 0, 1)
-  // scene.rotation.x = -(Math.PI/2); //+(Math.PI*23.4)/(2*90) 地軸
   controls.update();
   // 星全部
   for (let i=10; 0<=i; i--) {
@@ -68,7 +81,7 @@ onMount(async () => {
     scene.add(points);
   }
   //星座線 描画
-  const CONSTELLATIONS = await import("../constellations.json")
+  // const CONSTELLATIONS = await import("../constellations.json")
   var lines = []
   function getStarFromId(id) {
     let star_of_id;
@@ -77,19 +90,18 @@ onMount(async () => {
     })
     return star_of_id
   }
-  const keys = Object.keys(CONSTELLATIONS); // const keys = Object.keys(CONSTELLATIONS);
-  keys.splice(keys.indexOf("default"), 1);
-  keys.forEach((key)=> {
-    CONSTELLATIONS[key].flat().forEach((id) => { //データベースに保存するときにこの処理(id->position)をやっとく
-      let star = getStarFromId(id)
-      lines.push(star.x, star.y, star.z)
-    })
-  })
+  // const keys = Object.keys(CONSTELLATIONS); // const keys = Object.keys(CONSTELLATIONS);
+  // keys.splice(keys.indexOf("default"), 1);
+  // keys.forEach((key)=> {
+  //   CONSTELLATIONS[key].flat().forEach((id) => { //データベースに保存するときにこの処理(id->position)をやっとく
+  //     let star = getStarFromId(id)
+  //     lines.push(star.x, star.y, star.z)
+  //   })
+  // })
   constellations.flat().flat().forEach((id) => { //データベースに保存するときにこの処理(id->position)をやっとく
       let star = getStarFromId(id)
       lines.push(star.x, star.y, star.z)
-    })
-    console.log(lines);
+  })
   var geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(lines, 3));
   var material = new THREE.LineBasicMaterial({ color: "#15f5f5" });
@@ -116,11 +128,11 @@ onMount(async () => {
   // }
   const dat = await import('dat.gui');
   const gui = new dat.GUI()
-  const lineFolder = gui.addFolder('Star Lines color')
-  lineFolder.add(starLines.material.color, 'r', 0, 1)
-  lineFolder.add(starLines.material.color, 'g', 0, 1)
-  lineFolder.add(starLines.material.color, 'b', 0, 1)
-  lineFolder.open()
+  // const lineFolder = gui.addFolder('Star Lines color')
+  // lineFolder.add(starLines.material.color, 'r', 0, 1)
+  // lineFolder.add(starLines.material.color, 'g', 0, 1)
+  // lineFolder.add(starLines.material.color, 'b', 0, 1)
+  // lineFolder.open()
   const sceneFolder = gui.addFolder('Scene rotation')
   sceneFolder.add(scene.rotation, 'x', -Math.PI, Math.PI)
   sceneFolder.add(scene.rotation, 'y', -Math.PI, Math.PI)
@@ -156,8 +168,7 @@ onMount(async () => {
     texturePositionFolder.open()
   })
   document.getElementById("picturetest").addEventListener("click", () => {
-    // console.log(camera.getWorldDirection())
-    const file = im_file.files[0];
+    const file = image_input.files[0];
     var reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = function (e) {
@@ -204,11 +215,31 @@ onMount(async () => {
     closed = !closed
   })
   document.getElementById("send").addEventListener("click", async() => {
-    var img_content;
+    var vector = new THREE.Vector3();
+    var cameraVector = camera.getWorldDirection(vector);
+    var lookat = [];
+    Object.keys(cameraVector).forEach(key => lookat.push(cameraVector[key] * 1000));
+    console.log(lookat);
+    var img_content
     var img_size;
     if (mode == "drawing") {
       img_content = drawing;
-      img_size = {x: 300, y: 300};
+      img_size = {width: 300, height: 300};
+      const res = await startQA({
+        image:img_content,
+        angle:lookat,
+        max_mag:8,
+        blur_radius:15,
+        pixel_rate:20000
+      });
+      saveCstl(
+        document.getElementById("name").value, //star_name
+        res, //stars_connection
+        img_content, //image
+        lookat, //coord
+        img_size, // `[${img_size.x}, ${img_size.y}]` //size
+      )
+
     } else if (mode == "image") {
       var file = await im_file.files[0];
       var reader = new FileReader();
@@ -218,28 +249,26 @@ onMount(async () => {
         var img = new Image()
         img.src = e.target.result
         img.onload = async function () {
-          img_size = {x: this.width, y: this.height};
-        }
-      const res = await startQA({image:img_content, angle:[0,0,0], max_mag:8, blur_radius:15, pixel_rate:20000});
-      console.log(res[1]);
-      saveCstl(
-        document.getElementById("name").value,
-        "",
-        "[" + res[1] + "]",
-        img_content,
-        "",
-        `[${img_size.x}, ${img_size.y}]`
-        )
-      };
+          img_size = { width: this.width, height: this.height };
+          const res = await startQA({
+            image:img_content,
+            angle:lookat,
+            max_mag:8,
+            blur_radius:15,
+            pixel_rate:20000
+          });
+          console.log(res);
+          console.log("saving data...");
+          saveCstl(
+            document.getElementById("name").value, //star_name
+            res, //stars_connection
+            img_content, //image
+            lookat, //coord
+            img_size, // `[${img_size.x}, ${img_size.y}]` //size
+          )
+        };
+      }
     }
-    const circle = 2 * Math.PI * 1000
-    const img_deg = circle / 200
-    var vector = new THREE.Vector3();
-    var cameraVector = camera.getWorldDirection(vector);
-    var deg = Math.atan2(cameraVector.y, cameraVector.x);
-    var rad = [];
-    Object.keys(cameraVector).forEach(key => rad.push(cameraVector[key] * Math.PI));
-    console.log(rad);
     // const data = image.data
     // const drawn_pixels = [];
     // const drawn_pixel_ids = [];
@@ -258,45 +287,41 @@ onMount(async () => {
 });
 </script>
 <svelte:head>
-  <title>量子星座生成アプリ</title>
+  <title>QZ4U ~Quantum Zodiac maker for you~</title>
   <meta property="og:url" content="https://qac.vercel.app/">
-  <meta property="og:title" content="量子星座生成アプリ">
-  <meta property="og:description" content="💫量子アニーリングを使ってあなたのお絵描きから星座を生成するアプリです💫">
+  <meta property="og:title" content="QZ4U ~Quantum Zodiac maker for you~">
+  <meta property="og:description" content="量子アニーリングを使ってお絵描きや透過画像から星座を生成するアプリです">
   <meta property="og:image" content="">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
   <meta property="twitter:domain" content="qac.vercel.app">
   <meta property="twitter:url" content="https://qac.vercel.app/">
-  <meta name="twitter:title" content="量子星座生成アプリ">
-  <meta name="twitter:description" content="💫量子アニーリングを使ってあなたのお絵描きから星座を生成するアプリです💫">
+  <meta name="twitter:title" content="QZ4U ~Quantum Zodiac maker for you~">
+  <meta name="twitter:description" content="量子アニーリングを使ってお絵描きや透過画像から星座を生成するアプリです">
   <meta name="twitter:image" content="">
 </svelte:head>
 
 <div id="container">
   <div id="canvas_container" bind:this={canvas_container}>
     <button id="toggle_mode">🫰</button>
-    <!-- {#if mode == "drawing"} -->
-    <div style="display: {mode == "drawing" ? "block" : "none"};">
+    <div style="display: {mode == "drawing" ? "inline" : "none"};">
       <span>お絵描き</span>
       <CanvasEditor bind:png={drawing}/>
       <button id="drawtest">お絵描き描画</button>
     </div>
-    <!-- {:else if mode == "image"} -->
-    <div style="display: {mode == "drawing" ? "none" : "block"};">
+    <div style="display: {mode == "drawing" ? "none" : "inline"};">
       <span>画像</span>
       <div>
         <input type="file" accept="image/png" bind:this={im_file}>
       </div>
       <button id="picturetest">写真描画</button>
     </div>
-    <!-- {/if} -->
     <div>
       <label for="name">星座名</label>
       <input id="name" />
       <button id="send">生成</button>
     </div>
   <button id="btn_toggle_closed">{closed? ">": "<"}</button>
-  <!-- <DevelopMode /> -->
 </div>
 </div>
 <style>
@@ -304,13 +329,6 @@ onMount(async () => {
     overflow: hidden;
 		margin: 0;
 	}
-  /* #container {
-    position: fixed;
-    top: 10;
-    right: 10;
-    width: 500px;
-    height: 500px;
-  } */
   #canvas_container {
     border: 2px solid black;
     position: absolute;
