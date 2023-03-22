@@ -1,8 +1,8 @@
 <script>
 // @ts-nocheck
 import { onMount } from 'svelte';
-export let canvas;
 export let png;
+export let disable;
 const canvas_size = {x: 300, y: 300};
 onMount(() => {
   const canvas = document.getElementById("canvas")
@@ -125,8 +125,8 @@ onMount(() => {
 <svelte:head>
   <!-- This page is created using https://github.com/mukti107/Method-Draw-->
 </svelte:head>
-<div>
-  <canvas id="canvas" width="{canvas_size.x}px" height="{canvas_size.y}px" bind:this={canvas}></canvas>
+<div style="pointer-events: {disable? "none" : "auto"}">
+  <canvas id="canvas" width="{canvas_size.x}px" height="{canvas_size.y}px"></canvas>
   <button id="enable_pen">ペン</button>
   <button id="enable_eraser">消しゴム</button>
   <button id="all_eraser">全消し</button>

@@ -2,7 +2,7 @@ import { supabase } from "./supabaseClient"
 
 export async function startQA(json: JSON) {
   const json_text = JSON.stringify(json);
-  const res = await fetch('http://localhost:8000/', {
+  const res = await fetch('https://qca-api.onrender.com/', {
     method: 'POST',
     headers: {
       'Accept': 'application/json',

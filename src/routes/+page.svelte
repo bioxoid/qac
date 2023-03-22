@@ -10,6 +10,8 @@ let drawing="";
 let canvas_container;
 let im_file;
 let closed = false;
+let isWaiting = false;
+let isGenerataed = false;
 let mode = "drawing";
 onMount(async () => {
   const stars_json = await import("../stars.json")
@@ -24,17 +26,20 @@ onMount(async () => {
   const constellations_data = await loadCstl();
   console.log(constellations_data);
   var constellations = [];
+  var zodiac_positions = []
   constellations_data.forEach((c) => {
-    var geometry = new THREE.PlaneGeometry( c["image_size"]["x"], c["image_size"]["y"] );
+    const [img_width, img_height] = [c["image_size"]["width"], c["image_size"]["height"]]
+    var geometry = new THREE.PlaneGeometry(img_width, img_height);
     var material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, transparent: true });
     material.map = new THREE.TextureLoader().load(c["image"])
     var plane = new THREE.Mesh(geometry, material);
-    let [x, y, z] = [c["image_coord"][0], c["image_coord"][1], c["image_coord"][2]]
-    plane.position.set(x, y, z)
+    const [x, y, z] = [c["image_coord"][0], c["image_coord"][1], c["image_coord"][2]]
+    plane.position.set(x*1.001, y*1.001, z*1.001)
     const degx = () => {return Math.atan2(y,x)};
     const degy = () => {return Math.atan2(x,y)};
     const degz = () => {return Math.atan2(x,z)};
     plane.rotation.set(degx(x,y),degy(y,z),degz(z,x))
+    zodiac_positions.push({x: [x-img_width/2,x+img_width/2], y: [y-img_width/2,y+img_width/2], z:[z-img_width/2,z+img_width/2]})
     scene.add(plane);
     constellations.push(c["connected_stars"])
   })
@@ -47,12 +52,9 @@ onMount(async () => {
   controls.minDistance = 1;
   // controls.maxPolarAngle = Math.PI/2;
   // controls.maxDistance = 100;
-  // var vector = new THREE.Vector3(); // create once and reuse it!
-  // var vector = new THREE.Vector3( 0, 0, - 1 );
-  // vector.applyQuaternion( camera.quaternion );
-  // var angle = vector.angleTo( target.position );
-
-  camera.position.set(0, 0, 1)
+  // camera.position.set(0, 100, 0)
+  // camera.translateZ(+100)
+  camera.lookAt(0,-1000,0)
   controls.update();
   // 星全部
   for (let i=10; 0<=i; i--) {
@@ -94,7 +96,7 @@ onMount(async () => {
   //     lines.push(star.x, star.y, star.z)
   //   })
   // })
-  constellations.flat().flat().forEach((id) => { //データベースに保存するときにこの処理(id->position)をやっとく
+  constellations.flat().flat().forEach((id) => {
       let star = getStarFromId(id)
       lines.push(star.x, star.y, star.z)
   })
@@ -109,11 +111,12 @@ onMount(async () => {
   var sphere = new THREE.Mesh( geometry, material );
   scene.add(sphere);
   //地面
-  // var geometry = new THREE.PlaneGeometry( 2000, 2000 );
-  // var material = new THREE.MeshBasicMaterial( {color: "#1F365A", side: THREE.DoubleSide} );
-  // var plane = new THREE.Mesh( geometry, material );
-  // plane.rotation.z = Math.PI / 2;
+  var geometry = new THREE.PlaneGeometry( 2000, 2000 );
+  var material = new THREE.MeshBasicMaterial( {color: "#B5A48A", side: THREE.DoubleSide} );
+  var plane = new THREE.Mesh( geometry, material );
+  plane.rotation.z = Math.PI / 2;
   // scene.add( plane );
+
   const dat = await import('dat.gui');
   const gui = new dat.GUI()
   // const lineFolder = gui.addFolder('Star Lines color')
@@ -121,20 +124,13 @@ onMount(async () => {
   // lineFolder.add(starLines.material.color, 'g', 0, 1)
   // lineFolder.add(starLines.material.color, 'b', 0, 1)
   // lineFolder.open()
-  const sceneFolder = gui.addFolder('Scene rotation')
-  sceneFolder.add(scene.rotation, 'x', -Math.PI, Math.PI)
-  sceneFolder.add(scene.rotation, 'y', -Math.PI, Math.PI)
-  sceneFolder.add(scene.rotation, 'z', -Math.PI, Math.PI)
-  // const textureRotationFolder = gui.addFolder('Texture Rotation')
-  // textureRotationFolder.add(last_plane.rotation, 'x', -Math.PI, Math.PI)
-  // textureRotationFolder.add(last_plane.rotation, 'y', -Math.PI, Math.PI)
-  // textureRotationFolder.add(last_plane.rotation, 'z', -Math.PI, Math.PI)
-  // textureRotationFolder.open()
-  // const texturePositionFolder = gui.addFolder('Texture Position')
-  // texturePositionFolder.add(last_plane.position, 'x', -1000, 1000)
-  // texturePositionFolder.add(last_plane.position, 'y', -1000, 1000)
-  // texturePositionFolder.add(last_plane.position, 'z', -1000, 1000)
-  // texturePositionFolder.open()
+  // const sceneFolder = gui.addFolder('Camera Position')
+  // sceneFolder.add(scene.rotation, 'x', -Math.PI, Math.PI)
+  // sceneFolder.add(scene.rotation, 'y', -Math.PI, Math.PI)
+  // sceneFolder.add(scene.rotation, 'z', -Math.PI, Math.PI)
+  // sceneFolder.add(camera.position, 'x', -1000, 1000)
+  // sceneFolder.add(camera.position, 'y', -1000, 1000)
+  // sceneFolder.add(camera.position, 'z', -1000, 1000)
   document.body.appendChild( renderer.domElement );
   renderer.render(scene, camera);
   function animate() {
@@ -215,11 +211,18 @@ onMount(async () => {
     var cameraVector = camera.getWorldDirection(vector);
     var lookat = [];
     Object.keys(cameraVector).forEach(key => lookat.push(cameraVector[key] * 1000));
-    console.log(lookat);
+    function checkOverlap() {
+      return !zodiac_positions.some((p) => {
+        return ((p["x"][0] < lookat[0] && lookat[0] < p["x"][1]) && (p["y"][0] < lookat[1] && lookat[1] < p["y"][1]) && (p["z"][0] < lookat[2] && lookat[2] < p["z"][1]))
+      })
+    }
+    if (checkOverlap()) {
+    isWaiting = true;
     var img_content
     var img_size;
     if (mode == "drawing") {
       img_content = drawing;
+      if (img_content == "") { alert("ちゃんとお絵描きしてください。"); isWaiting = false; } else {
       img_size = {width: 300, height: 300};
       const res = await startQA({
         image:img_content,
@@ -235,36 +238,39 @@ onMount(async () => {
         lookat, //coord
         img_size, // `[${img_size.x}, ${img_size.y}]` //size
       )
-
-    } else if (mode == "image") {
-      var file = await im_file.files[0];
-      var reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = async function (e) {
-        img_content = e.target.result;
-        var img = new Image()
-        img.src = e.target.result
-        img.onload = async function () {
-          img_size = { width: this.width, height: this.height };
-          const res = await startQA({
-            image:img_content,
-            angle:lookat,
-            max_mag:8,
-            blur_radius:15,
-            pixel_rate:20000
-          });
-          console.log(res);
-          console.log("saving data...");
-          saveCstl(
-            document.getElementById("name").value, //star_name
-            res, //stars_connection
-            img_content, //image
-            lookat, //coord
-            img_size, // `[${img_size.x}, ${img_size.y}]` //size
-          )
-        };
+      isWaiting = false;
+      isGenerataed = true;
+      }} else if (mode == "image") {
+        var file = await im_file.files[0];
+        var reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = async function (e) {
+          img_content = e.target.result;
+          var img = new Image()
+          img.src = e.target.result
+          img.onload = async function () {
+            img_size = { width: this.width, height: this.height };
+            const res = await startQA({
+              image:img_content,
+              angle:lookat,
+              max_mag:document.getElementById("max_mag").value,
+              blur_radius:document.getElementById("blur_rad").value,
+              pixel_rate:document.getElementById("pixel_rate").value
+            });
+            console.log(res);
+            saveCstl(
+              document.getElementById("name").value, //star_name
+              res, //stars_connection
+              img_content, //image
+              lookat, //coord
+              img_size, // `[${img_size.x}, ${img_size.y}]` //size
+            )
+            isWaiting = false;
+            isGenerataed = true;
+          };
+        }
       }
-    }
+    } else { alert("使われていない領域を選択してください。") }
     // const data = image.data
     // const drawn_pixels = [];
     // const drawn_pixel_ids = [];
@@ -302,7 +308,7 @@ onMount(async () => {
     <button id="toggle_mode">🫰</button>
     <div style="display: {mode == "drawing" ? "inline" : "none"};">
       <span>お絵描き</span>
-      <CanvasEditor bind:png={drawing}/>
+      <CanvasEditor bind:png={drawing} bind:disable={isWaiting} />
       <button id="drawtest">お絵描き描画</button>
     </div>
     <div style="display: {mode == "drawing" ? "none" : "inline"};">
@@ -313,12 +319,33 @@ onMount(async () => {
       <button id="picturetest">写真描画</button>
     </div>
     <div>
-      <label for="name">星座名</label>
-      <input id="name" />
+      <div>
+        <label for="name">星座名</label>
+        <input id="name" type="text" />
+      </div>
+      <div>
+        <label for="pixel_rate">何ピクセル毎に星1つか</label>
+        <input id="pixel_rate" value="10000" type="number" class="mini"/>
+      </div>
+      <div>
+        <label for="max_mag">使う最大の等級</label>
+        <input id="max_mag" value="8" type="number" class="mini"/>
+      </div>
+      <div>
+        <label for="blur_rad">ぼかし度合い</label>
+        <input id="blur_rad" value="15" type="number" class="mini"/>
+      </div>
       <button id="send">生成</button>
     </div>
-  <button id="btn_toggle_closed">{closed? ">": "<"}</button>
+    <button id="btn_toggle_closed">{closed? ">": "<"}</button>
+  </div>
 </div>
+<div class="toast">
+  {#if isWaiting && !isGenerataed}
+  <p>生成中...お待ちください。</p>
+  {:else if isGenerataed}
+  <p>生成完了！リロードしてください。</p>
+  {/if}
 </div>
 <style>
 	:global(body) {
@@ -329,7 +356,7 @@ onMount(async () => {
     border: 2px solid black;
     position: absolute;
     width: 300px;
-    height: 400px;
+    /* height: 400px; */
     padding: 10px;
     left: 0px;
     top: 10px;
@@ -349,5 +376,16 @@ onMount(async () => {
 }
 #btn_toggle_closed:hover {
   background: #333
+}
+.toast {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  /* background: #444; */
+  color: white;
+  font-size: 1.3rem;
+}
+.mini {
+  width: 100px
 }
 </style>
