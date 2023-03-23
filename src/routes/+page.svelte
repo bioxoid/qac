@@ -27,35 +27,89 @@ onMount(async () => {
   console.log(constellations_data);
   var constellations = [];
   var zodiac_positions = []
+  var xarr=[];
   constellations_data.forEach((c) => {
     const [img_width, img_height] = [c["image_size"]["width"], c["image_size"]["height"]]
     var geometry = new THREE.PlaneGeometry(img_width, img_height);
     var material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, transparent: true });
     material.map = new THREE.TextureLoader().load(c["image"])
     var plane = new THREE.Mesh(geometry, material);
-    const [x, y, z] = [c["image_coord"][0], c["image_coord"][1], c["image_coord"][2]]
+    var [x, y, z] = [c["image_coord"][0], c["image_coord"][1], c["image_coord"][2]]
     plane.position.set(x*1.001, y*1.001, z*1.001)
-    const degx = () => {return Math.atan2(y,x)};
-    const degy = () => {return Math.atan2(x,y)};
-    const degz = () => {return Math.atan2(x,z)};
-    plane.rotation.set(degx(x,y),degy(y,z),degz(z,x))
+    const pnx = (val) => {return (0 < val) ? -1 : 1}
+    const pny = (val) => {return (0 > val) ? -1 : 1}
+    let radian_around_y = Math.acos(z / Math.sqrt(x ** 2 + z ** 2)) * (pny(x))
+    let sin_around_y = Math.sin(-radian_around_y)
+    let cos_around_y = Math.cos(-radian_around_y)
+    let nz = -x * sin_around_y + z * cos_around_y
+    let radian_around_x = Math.acos(nz / Math.sqrt(nz ** 2 + y ** 2)) * (pnx(y))
+    const radx = () => {return radian_around_x};
+    const rady = () => {return radian_around_y};
+    xarr.push({
+      name: c["name"],
+      x: Math.floor(x),
+      y: Math.floor(y),
+      z: Math.floor(z),
+      radx: Math.floor(radx()*180/Math.PI),
+      rady: Math.floor(rady()*180/Math.PI),
+      acosの中のやつ: nz / Math.sqrt(nz ** 2 + y ** 2),
+      nz: nz
+    });
+    plane.rotation.x = radx()
+    plane.rotation.y = rady()
+    plane.rotation.z = 0
+    // plane.rotation.set(0, rady(), 0)
+    // plane.rotation.set(radx(), 0, 0)
+
     zodiac_positions.push({x: [x-img_width/2,x+img_width/2], y: [y-img_width/2,y+img_width/2], z:[z-img_width/2,z+img_width/2]})
     scene.add(plane);
     constellations.push(c["connected_stars"])
   })
-  const camera = new THREE.PerspectiveCamera(50, window_size.ratio, 1, 10000) //視野角, アスペクト比, near, far
+  console.log(xarr);
+  const camera = new THREE.PerspectiveCamera(50, window_size.ratio, 10, 10000) //視野角, アスペクト比, near, far
   camera.rotation.order = "YXZ"
   const renderer = new THREE.WebGLRenderer( { antialias: true , preserveDrawingBuffer: true } );
   renderer.setSize( window_size.width, window_size.height );
 
   const controls = new OrbitControls(camera, renderer.domElement)
   controls.minDistance = 1;
+  controls.zoomSpeed = 1.5
   // controls.maxPolarAngle = Math.PI/2;
   // controls.maxDistance = 100;
   // camera.position.set(0, 100, 0)
   // camera.translateZ(+100)
   camera.lookAt(0,-1000,0)
   controls.update();
+  //ああああああ
+  var geometry = new THREE.BoxGeometry(5, 2000, 5);// 立方体
+  var material = new THREE.MeshBasicMaterial({color: "#ff0"});// 影が表示される
+  var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
+  cube.position.y = 1000
+  scene.add(cube);
+  var geometry = new THREE.BoxGeometry(5, 2000, 5);// 立方体
+  var material = new THREE.MeshBasicMaterial({color: "#990"});// 影が表示される
+  var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
+  cube.position.y = -1000
+  scene.add(cube);
+  var geometry = new THREE.BoxGeometry(2000, 5, 5);// 立方体
+  var material = new THREE.MeshBasicMaterial({color: "#0f0"});// 影が表示される
+  var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
+  cube.position.x = 1000
+  scene.add(cube);
+  var geometry = new THREE.BoxGeometry(2000, 5, 5);// 立方体
+  var material = new THREE.MeshBasicMaterial({color: "#090"});// 影が表示される
+  var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
+  cube.position.x = -1000
+  scene.add(cube);
+  var geometry = new THREE.BoxGeometry(5, 5, 2000);// 立方体
+  var material = new THREE.MeshBasicMaterial({color: "#f00"});// 影が表示される
+  var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
+  cube.position.z = 1000
+  scene.add(cube);
+  var material = new THREE.MeshBasicMaterial({color: "#900"});// 影が表示される
+  var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
+  cube.position.z = -1000
+  scene.add(cube);
   // 星全部
   for (let i=10; 0<=i; i--) {
     var positions = [];
@@ -342,7 +396,7 @@ onMount(async () => {
 </div>
 <div class="toast">
   {#if isWaiting && !isGenerataed}
-  <p>生成中...お待ちください。</p>
+  <p>生成中...お待ちください。(大体2分くらいかかります)</p>
   {:else if isGenerataed}
   <p>生成完了！リロードしてください。</p>
   {/if}
