@@ -125,7 +125,6 @@ onMount(async () => {
   var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
   cube.position.z = -1000
   //scene.add(cube);
->>>>>>> 366581d560941a2b620ed89012790186047631af
   // 星全部
   for (let i=10; 0<=i; i--) {
     var positions = [];
