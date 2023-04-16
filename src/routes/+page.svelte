@@ -95,38 +95,7 @@ onMount(async () => {
   // camera.translateZ(+100)
   camera.lookAt(0,100,0)
   controls.update();
-  //ああああああ
-<<<<<<< HEAD
-  // var geometry = new THREE.BoxGeometry(5, 2000, 5);// 立方体
-  // var material = new THREE.MeshBasicMaterial({color: "#ff0"});// 影が表示される
-  // var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
-  // cube.position.y = 1000
-  // scene.add(cube);
-  // var geometry = new THREE.BoxGeometry(5, 2000, 5);// 立方体
-  // var material = new THREE.MeshBasicMaterial({color: "#990"});// 影が表示される
-  // var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
-  // cube.position.y = -1000
-  // scene.add(cube);
-  // var geometry = new THREE.BoxGeometry(2000, 5, 5);// 立方体
-  // var material = new THREE.MeshBasicMaterial({color: "#0f0"});// 影が表示される
-  // var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
-  // cube.position.x = 1000
-  // scene.add(cube);
-  // var geometry = new THREE.BoxGeometry(2000, 5, 5);// 立方体
-  // var material = new THREE.MeshBasicMaterial({color: "#090"});// 影が表示される
-  // var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
-  // cube.position.x = -1000
-  // scene.add(cube);
-  // var geometry = new THREE.BoxGeometry(5, 5, 2000);// 立方体
-  // var material = new THREE.MeshBasicMaterial({color: "#f00"});// 影が表示される
-  // var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
-  // cube.position.z = 1000
-  // scene.add(cube);
-  // var material = new THREE.MeshBasicMaterial({color: "#900"});// 影が表示される
-  // var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
-  // cube.position.z = -1000
-  // scene.add(cube);
-=======
+  //あああ
   var geometry = new THREE.BoxGeometry(5, 2000, 5);// 立方体
   var material = new THREE.MeshBasicMaterial({color: "#ff0"});// 影が表示される
   var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
