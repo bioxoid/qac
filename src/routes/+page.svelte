@@ -186,17 +186,13 @@ onMount(async () => {
   plane.rotation.z = Math.PI / 2;
   // scene.add( plane );
 
-  const dat = await import('dat.gui');
-  const gui = new dat.GUI()
+  // const dat = await import('dat.gui');
+  // const gui = new dat.GUI()
   // const lineFolder = gui.addFolder('Star Lines color')
   // lineFolder.add(starLines.material.color, 'r', 0, 1)
   // lineFolder.add(starLines.material.color, 'g', 0, 1)
   // lineFolder.add(starLines.material.color, 'b', 0, 1)
   // lineFolder.open()
-  const sceneFolder = gui.addFolder('Orion Rotation')
-  sceneFolder.add(orion.rotation, 'x', -Math.PI, Math.PI)
-  sceneFolder.add(orion.rotation, 'y', -Math.PI, Math.PI)
-  sceneFolder.add(orion.rotation, 'z', -Math.PI, Math.PI)
   // sceneFolder.add(camera.position, 'x', -1000, 1000)
   // sceneFolder.add(camera.position, 'y', -1000, 1000)
   // sceneFolder.add(camera.position, 'z', -1000, 1000)
