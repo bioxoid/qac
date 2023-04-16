@@ -13,13 +13,12 @@ export async function startQA(json: JSON) {
   });
   const content = await res.json();
   return content
-};
+}
 
 export async function loadCstl() {
-  let { data: Zodiac } = await supabase.from('Zodiac').select('*')
-
+  const { data: Zodiac } = await supabase.from('Zodiac').select('*')
   return Zodiac
-};
+}
 
 export async function saveCstl(star_name: string, stars_connection: JSON, image: string, coord: JSON, size: JSON) {
   const { data, error } = await supabase
@@ -28,4 +27,4 @@ export async function saveCstl(star_name: string, stars_connection: JSON, image:
       { name: star_name, image: image, image_coord: coord, image_size: size, connected_stars: stars_connection },
   ])
   return {data, error}
-};
+}

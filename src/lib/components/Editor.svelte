@@ -61,6 +61,7 @@ onMount(() => {
         x = e.offsetX;
         y = e.offsetY;
         floodFill(ctx, x, y, [255, 255, 128, 255])
+        console.log("completed!");
         break;
     }
     png=canvas.toDataURL("image/png", 1)
@@ -72,7 +73,9 @@ onMount(() => {
     const targetColor = getPixel(imageData, x, y);
     // check we are actually filling a different color
     if (!colorsMatch(targetColor, fillColor)) {
-      fillPixel(imageData, x, y, targetColor, fillColor);
+      // trampoline(fillPixel)(imageData, x, y, targetColor, fillColor)
+      // console.log(res);
+      fillPixel(imageData, x, y, targetColor, fillColor)
       // put the data back
       ctx.putImageData(imageData, 0, 0);
     }
@@ -99,11 +102,21 @@ onMount(() => {
     const currentColor = getPixel(imageData, x, y);
     if (colorsMatch(currentColor, targetColor)) {
       setPixel(imageData, x, y, fillColor);
-      fillPixel(imageData, x + 1, y, targetColor, fillColor);
-      fillPixel(imageData, x - 1, y, targetColor, fillColor);
-      fillPixel(imageData, x, y + 1, targetColor, fillColor);
-      fillPixel(imageData, x, y - 1, targetColor, fillColor);
+      // return () => {
+        fillPixel(imageData, x + 1, y, targetColor, fillColor);
+        fillPixel(imageData, x - 1, y, targetColor, fillColor);
+        fillPixel(imageData, x, y + 1, targetColor, fillColor);
+        fillPixel(imageData, x, y - 1, targetColor, fillColor);
+      // }
     }
+  }
+  function trampoline (fn) {
+    return (...args) => {
+      let result = fn(...args);
+      while (typeof result === 'function') {
+        fn(...args);
+      }
+    };
   }
   document.getElementById("enable_pen").addEventListener("click", () => {
     mode = "pen"

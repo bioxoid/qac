@@ -28,39 +28,54 @@ onMount(async () => {
   var constellations = [];
   var zodiac_positions = []
   var xarr=[];
+  let orion = null;
   constellations_data.forEach((c) => {
     const [img_width, img_height] = [c["image_size"]["width"], c["image_size"]["height"]]
     var geometry = new THREE.PlaneGeometry(img_width, img_height);
     var material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, transparent: true });
     material.map = new THREE.TextureLoader().load(c["image"])
     var plane = new THREE.Mesh(geometry, material);
-    var [x, y, z] = [c["image_coord"][0], c["image_coord"][1], c["image_coord"][2]]
+    const [x, y, z] = [c["image_coord"][0], c["image_coord"][1], c["image_coord"][2]];
     plane.position.set(x*1.001, y*1.001, z*1.001)
-    const pnx = (val) => {return (0 < val) ? -1 : 1}
-    const pny = (val) => {return (0 > val) ? -1 : 1}
-    let radian_around_y = Math.acos(z / Math.sqrt(x ** 2 + z ** 2)) * (pny(x))
-    let sin_around_y = Math.sin(-radian_around_y)
-    let cos_around_y = Math.cos(-radian_around_y)
-    let nz = -x * sin_around_y + z * cos_around_y
-    let radian_around_x = Math.acos(nz / Math.sqrt(nz ** 2 + y ** 2)) * (pnx(y))
-    const radx = () => {return radian_around_x};
-    const rady = () => {return radian_around_y};
+    //画像の目標姿勢を計算
+    const place_vector = [x, y, z]
+    const radian_around_y = Math.acos(z / Math.sqrt(x ** 2 + z ** 2)) * (x / Math.abs(x))
+    const rotate_around_y = (vector, radian)=>{
+      const [x, y, z] = vector
+      const cos = Math.cos(radian)
+      const sin = Math.sin(radian)
+      return [cos * x + sin * z, y, -sin * x + cos * z]
+    }
+    const [_, y_in_zy, z_in_zy] = rotate_around_y(place_vector, -radian_around_y)
+    const target_attitude = rotate_around_y([0., z_in_zy, -y_in_zy], radian_around_y)
+    //x 軸まわり→y 軸周りの順に回転させながら回転角を計算
+    const radian_around_x = Math.acos(z / Math.sqrt(y ** 2 + z ** 2)) * (y / Math.abs(y))
+    const rotate_around_x = (vector, radian)=>{
+      const [x, y, z] = vector
+      const cos = Math.cos(radian)
+      const sin = Math.sin(radian)
+      return [x, cos * y - sin * z, sin * y + cos * z]
+    }
+    const [__, ___, z_in_zx] = rotate_around_x(place_vector, radian_around_x)
+    const radian_around_y_in_zx = Math.acos(z_in_zx / Math.sqrt(x ** 2 + z_in_zx ** 2)) * (x / Math.abs(x))
+    //目標姿勢を回転させて z 軸周りの回転角を計算
+    const attitude_rotated_around_x = rotate_around_x(target_attitude, radian_around_x)
+    const attitude_on_z = rotate_around_y(attitude_rotated_around_x, -radian_around_y_in_zx)
+    const radian_around_z = Math.acos(attitude_on_z[1] / Math.sqrt(attitude_on_z[0] ** 2 + attitude_on_z[1] ** 2)) * (attitude_on_z[0] / Math.abs(attitude_on_z[0]))
     xarr.push({
       name: c["name"],
       x: Math.floor(x),
       y: Math.floor(y),
       z: Math.floor(z),
-      radx: Math.floor(radx()*180/Math.PI),
-      rady: Math.floor(rady()*180/Math.PI),
-      acosの中のやつ: nz / Math.sqrt(nz ** 2 + y ** 2),
-      nz: nz
+      x_degree: Math.round(radian_around_x * 180 / Math.PI),
+      y_degree: Math.round(radian_around_y_in_zx * 180 / Math.PI),
+      z_degree: Math.round(radian_around_z * 180 / Math.PI),
     });
-    plane.rotation.x = radx()
-    plane.rotation.y = rady()
-    plane.rotation.z = 0
-    // plane.rotation.set(0, rady(), 0)
-    // plane.rotation.set(radx(), 0, 0)
-
+    plane.rotation.x = -radian_around_x
+    plane.rotation.y = radian_around_y_in_zx
+    plane.rotation.z = -radian_around_z
+    plane.name = c["name"]
+    if (c["name"] == "オリオン") {orion = plane;}
     zodiac_positions.push({x: [x-img_width/2,x+img_width/2], y: [y-img_width/2,y+img_width/2], z:[z-img_width/2,z+img_width/2]})
     scene.add(plane);
     constellations.push(c["connected_stars"])
@@ -76,40 +91,40 @@ onMount(async () => {
   controls.zoomSpeed = 1.5
   // controls.maxPolarAngle = Math.PI/2;
   // controls.maxDistance = 100;
-  // camera.position.set(0, 100, 0)
+  camera.position.set(0, 0, 0)
   // camera.translateZ(+100)
-  camera.lookAt(0,-1000,0)
+  camera.lookAt(0,100,0)
   controls.update();
   //ああああああ
-  var geometry = new THREE.BoxGeometry(5, 2000, 5);// 立方体
-  var material = new THREE.MeshBasicMaterial({color: "#ff0"});// 影が表示される
-  var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
-  cube.position.y = 1000
-  scene.add(cube);
-  var geometry = new THREE.BoxGeometry(5, 2000, 5);// 立方体
-  var material = new THREE.MeshBasicMaterial({color: "#990"});// 影が表示される
-  var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
-  cube.position.y = -1000
-  scene.add(cube);
-  var geometry = new THREE.BoxGeometry(2000, 5, 5);// 立方体
-  var material = new THREE.MeshBasicMaterial({color: "#0f0"});// 影が表示される
-  var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
-  cube.position.x = 1000
-  scene.add(cube);
-  var geometry = new THREE.BoxGeometry(2000, 5, 5);// 立方体
-  var material = new THREE.MeshBasicMaterial({color: "#090"});// 影が表示される
-  var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
-  cube.position.x = -1000
-  scene.add(cube);
-  var geometry = new THREE.BoxGeometry(5, 5, 2000);// 立方体
-  var material = new THREE.MeshBasicMaterial({color: "#f00"});// 影が表示される
-  var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
-  cube.position.z = 1000
-  scene.add(cube);
-  var material = new THREE.MeshBasicMaterial({color: "#900"});// 影が表示される
-  var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
-  cube.position.z = -1000
-  scene.add(cube);
+  // var geometry = new THREE.BoxGeometry(5, 2000, 5);// 立方体
+  // var material = new THREE.MeshBasicMaterial({color: "#ff0"});// 影が表示される
+  // var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
+  // cube.position.y = 1000
+  // scene.add(cube);
+  // var geometry = new THREE.BoxGeometry(5, 2000, 5);// 立方体
+  // var material = new THREE.MeshBasicMaterial({color: "#990"});// 影が表示される
+  // var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
+  // cube.position.y = -1000
+  // scene.add(cube);
+  // var geometry = new THREE.BoxGeometry(2000, 5, 5);// 立方体
+  // var material = new THREE.MeshBasicMaterial({color: "#0f0"});// 影が表示される
+  // var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
+  // cube.position.x = 1000
+  // scene.add(cube);
+  // var geometry = new THREE.BoxGeometry(2000, 5, 5);// 立方体
+  // var material = new THREE.MeshBasicMaterial({color: "#090"});// 影が表示される
+  // var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
+  // cube.position.x = -1000
+  // scene.add(cube);
+  // var geometry = new THREE.BoxGeometry(5, 5, 2000);// 立方体
+  // var material = new THREE.MeshBasicMaterial({color: "#f00"});// 影が表示される
+  // var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
+  // cube.position.z = 1000
+  // scene.add(cube);
+  // var material = new THREE.MeshBasicMaterial({color: "#900"});// 影が表示される
+  // var cube = new THREE.Mesh(geometry, material);// それらをまとめて3Dオブジェクトにします
+  // cube.position.z = -1000
+  // scene.add(cube);
   // 星全部
   for (let i=10; 0<=i; i--) {
     var positions = [];
@@ -178,10 +193,10 @@ onMount(async () => {
   // lineFolder.add(starLines.material.color, 'g', 0, 1)
   // lineFolder.add(starLines.material.color, 'b', 0, 1)
   // lineFolder.open()
-  // const sceneFolder = gui.addFolder('Camera Position')
-  // sceneFolder.add(scene.rotation, 'x', -Math.PI, Math.PI)
-  // sceneFolder.add(scene.rotation, 'y', -Math.PI, Math.PI)
-  // sceneFolder.add(scene.rotation, 'z', -Math.PI, Math.PI)
+  const sceneFolder = gui.addFolder('Orion Rotation')
+  sceneFolder.add(orion.rotation, 'x', -Math.PI, Math.PI)
+  sceneFolder.add(orion.rotation, 'y', -Math.PI, Math.PI)
+  sceneFolder.add(orion.rotation, 'z', -Math.PI, Math.PI)
   // sceneFolder.add(camera.position, 'x', -1000, 1000)
   // sceneFolder.add(camera.position, 'y', -1000, 1000)
   // sceneFolder.add(camera.position, 'z', -1000, 1000)
@@ -214,7 +229,7 @@ onMount(async () => {
     texturePositionFolder.open()
   })
   document.getElementById("picturetest").addEventListener("click", () => {
-    const file = image_input.files[0];
+    var file = im_file.files[0];
     var reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = function (e) {
